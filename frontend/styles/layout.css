@@ -6,12 +6,13 @@
   min-height: 100vh;
   width: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 20px;
 }
 
 .app {
-  width: min(100%, var(--container));
+  width: 100%;
+  max-width: var(--container);
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 32px;
@@ -29,11 +30,7 @@
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: linear-gradient(
-    180deg,
-    rgba(14, 22, 38, 0.84),
-    rgba(14, 22, 38, 0.72)
-  );
+  background: var(--panel);
   backdrop-filter: var(--blur);
   box-shadow: var(--shadow);
 }
@@ -88,7 +85,7 @@
 /* Main layout */
 .layout {
   display: grid;
-  grid-template-columns: 390px 1fr;
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
   gap: 16px;
   min-height: calc(100vh - 112px);
   min-width: 0;
@@ -102,11 +99,7 @@
 .panel {
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: linear-gradient(
-    180deg,
-    rgba(14, 22, 38, 0.8),
-    rgba(14, 22, 38, 0.66)
-  );
+  background: var(--panel2);
   backdrop-filter: var(--blur);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -136,7 +129,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+background: var(--card);
 }
 
 .detail-title {
@@ -152,7 +145,7 @@
 }
 
 .section {
-  padding: 18px;
+  padding: 18px 10px;
 }
 
 .content {
@@ -245,7 +238,7 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   min-width: 0;
   transition:
     border-color var(--t),
@@ -509,11 +502,7 @@
   padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: linear-gradient(
-    180deg,
-    rgba(16, 24, 40, 0.98),
-    rgba(13, 21, 35, 0.98)
-  );
+background: var(--panel2);
   backdrop-filter: var(--blur);
   box-shadow: var(--shadow);
   opacity: 0;
@@ -558,7 +547,7 @@
   border-radius: 10px;
   border: 1px solid var(--line);
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   text-decoration: none;
   transition:
     color var(--t),
@@ -568,7 +557,7 @@
 
 .about-link:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.07);
+ background: var(--panel);
   border-color: rgba(92, 167, 255, 0.35);
 }
 
@@ -640,4 +629,23 @@
     box-sizing: border-box;
     overflow: hidden;
   }
+}
+
+
+/* ==========================================================
+   Theme Transitions
+   ========================================================== */
+
+.topbar,
+.panel,
+.detail-head,
+.source-item,
+.about-popup,
+.about-link {
+  transition:
+    background-color .3s ease,
+    background .3s ease,
+    color .3s ease,
+    border-color .3s ease,
+    box-shadow .3s ease;
 }
