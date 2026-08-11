@@ -23,14 +23,14 @@
   height: 42px;
   border-radius: 14px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   display: grid;
   place-items: center;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 }
 
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--panel);
   border-color: var(--line2);
   transform: translateY(-1px);
 }
@@ -72,18 +72,18 @@
 
 .btn-primary {
   background: linear-gradient(135deg, #5ca7ff, #37c0f2);
-  color: white;
+  color: #fff;
   box-shadow: 0 12px 28px rgba(55, 192, 242, 0.18);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card);
   border-color: var(--line);
   color: var(--text);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--panel);
   border-color: var(--line2);
 }
 
@@ -109,7 +109,7 @@
   height: 34px;
   border-radius: 12px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   color: var(--muted);
   display: grid;
   place-items: center;
@@ -117,7 +117,7 @@
 
 .mini-btn:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--panel);
   color: var(--text);
   border-color: var(--line);
 }
@@ -127,22 +127,21 @@
   height: 38px;
   border-radius: 13px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   display: grid;
   place-items: center;
 }
 
 .copy-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--panel);
   border-color: var(--line2);
 }
 
-/* Input fields */
 .input-field {
   width: 100%;
   border-radius: 15px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   color: var(--text);
   padding: 12px 14px;
   outline: none;
@@ -155,18 +154,16 @@
 
 .input-field:focus {
   border-color: rgba(92, 167, 255, 0.45);
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--panel);
   box-shadow: 0 0 0 4px rgba(92, 167, 255, 0.1);
 }
 
 .input-field::placeholder {
   color: #7488a0;
 }
-
 .input-group {
   margin-bottom: 15px;
 }
-
 .input-label {
   display: block;
   font-size: 13px;
@@ -174,13 +171,11 @@
   margin-bottom: 8px;
   font-weight: 700;
 }
-
 .input-hint {
   margin-top: 6px;
   font-size: 12px;
   color: var(--hint);
 }
-
 .input-hint-link {
   display: inline-block;
   text-decoration: none;
@@ -188,42 +183,31 @@
   transition: color var(--t);
   font-size: 10px;
 }
-
 .input-hint-link:hover {
-  color: var(--accent, #5ca7ff);
+  color: var(--accent);
 }
 
-/* Pills and badges */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--muted);
-  font-size: 12px;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
+.pill,
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   color: var(--muted);
   font-size: 12px;
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+.status-pill {
+  padding: 10px 12px;
+  border-radius: 999px;
 }
 
 .badge-type {
@@ -239,39 +223,31 @@
   border: 1px solid transparent;
   white-space: nowrap;
 }
-
 .badge-config {
   background: rgba(74, 222, 128, 0.12);
   color: #86efac;
   border-color: rgba(74, 222, 128, 0.14);
 }
-
 .badge-url {
   background: rgba(251, 191, 36, 0.12);
   color: #fde68a;
   border-color: rgba(251, 191, 36, 0.14);
 }
-
 .badge-token {
   background: rgba(92, 167, 255, 0.12);
   color: #bfdbfe;
   border-color: rgba(92, 167, 255, 0.14);
 }
 
-/* Cards */
 .connect-banner {
   margin-top: 14px;
   padding: 12px 14px;
   border-radius: 16px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   font-size: 12px;
   color: var(--muted);
 }
-
-/* ===========================
-   Fixed API URL badge
-   =========================== */
 
 .fixed-badge {
   display: inline-flex;
@@ -289,37 +265,28 @@
   vertical-align: middle;
   margin-left: 6px;
 }
-
 .fixed-badge::before {
   content: "🔒";
   font-size: 9px;
 }
-
 .fixed-badge.hidden {
   display: none;
 }
 
-/* Read-only input when URL is server-fixed */
 .input-fixed {
   opacity: 0.7;
   cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: var(--card) !important;
   color: var(--muted) !important;
-  user-select: text; /* still selectable/copyable */
+  user-select: text;
 }
 
-/* Topbar connect button — green dot when connected */
 .icon-btn.primary.is-connected {
   color: var(--success);
   border-color: rgba(74, 222, 128, 0.25);
   background: rgba(74, 222, 128, 0.08);
 }
 
-/* ===========================
-   Source visibility (eye) toggle
-   =========================== */
-
-/* Positioned between the type badge and the refresh/ctx action buttons */
 .mini-btn.eye-btn.is-hidden-on {
   color: var(--warning);
   border-color: rgba(251, 191, 36, 0.25);
@@ -331,12 +298,38 @@
   background: rgba(251, 191, 36, 0.14);
 }
 
-/* Dim the whole row a touch when a source is hidden from end users,
-   so it reads as "present but not shown" at a glance in the list. */
 .source-item.is-source-hidden {
   opacity: 0.72;
 }
-
 .source-item.is-source-hidden .source-data {
   color: var(--muted);
+}
+
+.icon-btn,
+.btn,
+.mini-btn,
+.copy-btn,
+.input-field,
+.pill,
+.status-pill,
+.connect-banner {
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+}
+
+.provider-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.provider-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
