@@ -3,7 +3,7 @@
  */
 
 /*
- * FIX [Bug]: z-index стек переработан.
+ * z-index стек:
  * .save-bar        = 100  (components-advanced.css)
  * .modal-overlay   = 400  ← ВСЕГДА поверх save-bar
  * .editor-menu/ctx = 500  ← поверх модалок
@@ -20,8 +20,8 @@
   transition: opacity 0.25s ease;
 }
 
-.modal-overlay.open,
-.full-modal.open {
+.modal-overlay.show,
+.full-modal.show {
   opacity: 1;
   pointer-events: auto;
 }
@@ -51,7 +51,7 @@
   position: relative;
 }
 
-.modal-overlay.open .modal {
+.modal-overlay.show .modal {
   transform: translateY(0);
 }
 
@@ -100,7 +100,7 @@
     opacity 0.2s ease;
 }
 
-.full-modal.open {
+.full-modal.show {
   transform: translateY(0);
   opacity: 1;
   pointer-events: auto;
@@ -465,7 +465,6 @@
     align-items: flex-end;
     /* Overlay itself scrolls if modal taller than viewport */
     overflow-y: auto;
-    align-items: flex-end;
   }
 
   /* Full modal — full screen on mobile */
@@ -521,4 +520,54 @@
   .modal {
     padding: 16px 14px 20px;
   }
+}
+
+/* =====================================
+   SETTINGS MODAL
+===================================== */
+
+#modal-settings .setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+#modal-settings .setting-row:last-child {
+  border-bottom: none;
+}
+
+#modal-settings .setting-row-title {
+  color: var(--text);
+  font-weight: 600;
+}
+
+#modal-settings .setting-row-hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* =====================================
+   INPUTS INSIDE MODALS
+===================================== */
+
+.modal input,
+.modal select,
+.full-modal input,
+.full-modal select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  color: var(--text);
+}
+
+.modal input:focus,
+.modal select:focus,
+.full-modal input:focus,
+.full-modal select:focus {
+  outline: none;
+  border-color: var(--accent);
 }

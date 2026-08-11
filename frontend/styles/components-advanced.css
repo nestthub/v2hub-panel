@@ -62,6 +62,11 @@
   margin-bottom: 14px;
 }
 
+.toolbar .btn {
+  flex: 1;
+  justify-content: center;
+}
+
 /* Subscription cards */
 .sub-card {
   border: 1px solid var(--line);
