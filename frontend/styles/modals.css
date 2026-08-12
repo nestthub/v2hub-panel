@@ -37,11 +37,7 @@
   width: 100%;
   max-height: 92vh;
   overflow: auto;
-  background: linear-gradient(
-    180deg,
-    rgba(16, 24, 40, 0.98),
-    rgba(13, 21, 35, 0.98)
-  );
+  background: var(--panel2);
   border-radius: 24px 24px 0 0;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -91,7 +87,7 @@
 
 /* Full modal */
 .full-modal {
-  background: rgba(7, 12, 20, 0.92);
+  background: var(--panel2);
   display: flex;
   flex-direction: column;
   transform: translateY(100%);
@@ -109,7 +105,7 @@
 .full-modal-header,
 .full-modal-footer {
   padding: 16px 18px;
-  background: rgba(16, 24, 40, 0.78);
+  background: var(--panel);
   backdrop-filter: var(--blur);
 }
 
@@ -154,7 +150,7 @@
   z-index: 600;
   padding: 11px 16px;
   border-radius: 999px;
-  background: rgba(16, 24, 40, 0.94);
+  background: var(--panel2);
   border: 1px solid var(--line);
   color: var(--text);
   box-shadow: var(--shadow);
@@ -179,11 +175,7 @@
   min-width: 180px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: linear-gradient(
-    180deg,
-    rgba(16, 24, 40, 0.98),
-    rgba(13, 21, 35, 0.98)
-  );
+  background: var(--panel2);
   box-shadow: var(--shadow);
   padding: 8px;
 
@@ -222,11 +214,15 @@
 }
 
 .editor-menu-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--card);
 }
 
 .editor-menu-item.danger {
   color: #fecdd3;
+}
+
+body.light-theme .editor-menu-item.danger {
+  color: #b91c1c;
 }
 
 .editor-divider {
@@ -242,11 +238,7 @@
   min-width: 180px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: linear-gradient(
-    180deg,
-    rgba(16, 24, 40, 0.98),
-    rgba(13, 21, 35, 0.98)
-  );
+  background: var(--panel2);
   box-shadow: var(--shadow);
   padding: 8px;
   opacity: 0;
@@ -280,11 +272,15 @@
 }
 
 .ctx-menu-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--card);
 }
 
 .ctx-menu-item.danger {
   color: #fecdd3;
+}
+
+body.light-theme .ctx-menu-item.danger {
+  color: #b91c1c;
 }
 
 .ctx-divider {
@@ -420,6 +416,34 @@
 .error-notification-close:hover {
   background: rgba(251, 113, 133, 0.16);
   color: #fff;
+}
+
+/* Light theme: the notification's pastel palette above is tuned for the
+   dark-red gradient backdrop and loses contrast against the lighter tint
+   blended with a white page — use darker shades of the same hues. */
+body.light-theme .error-notification-icon {
+  color: #dc2626;
+}
+body.light-theme .error-notification-icon.icon-network {
+  color: #b45309;
+}
+body.light-theme .error-notification-icon.icon-validation {
+  color: #6d28d9;
+}
+body.light-theme .error-notification-icon.icon-server {
+  color: #be123c;
+}
+body.light-theme .error-notification-title {
+  color: #b91c1c;
+}
+body.light-theme .error-notification-message {
+  color: #dc2626;
+}
+body.light-theme .error-notification-close {
+  color: #b91c1c;
+}
+body.light-theme .error-notification-close:hover {
+  color: #7f1d1d;
 }
 
 /* Modal footer fix for responsive */

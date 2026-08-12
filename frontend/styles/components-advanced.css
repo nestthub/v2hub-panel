@@ -181,7 +181,127 @@
 }
 
 .chevron {
-  color: #7f95ad;
+  color: var(--muted);
+}
+
+/* ===========================
+   Provider subscription groups
+   =========================== */
+
+.provider-groups {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.provider-group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--card);
+}
+
+.provider-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  transition:
+    background var(--t),
+    color var(--t);
+}
+
+.provider-group-header:hover {
+  background: var(--panel);
+}
+
+.provider-group-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.provider-group-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.provider-group-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.provider-group-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform var(--t);
+}
+
+.provider-group-header.open .provider-group-chevron {
+  transform: rotate(90deg);
+}
+
+.provider-group-body {
+  display: grid;
+  gap: 8px;
+  padding: 0 10px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height var(--t),
+    opacity var(--t),
+    padding var(--t);
+}
+
+.provider-group-body.open {
+  /* Generous cap so a group with many subscriptions doesn't get clipped;
+     actual height is only ever as tall as the content. */
+  max-height: 4000px;
+  opacity: 1;
+  padding: 0 10px 10px;
+}
+
+.provider-group-body .sub-card {
+  border-radius: var(--radius-md);
+}
+
+/* Badge shown in the editor header when the open subscription belongs
+   to a provider (read-only, copy-only). */
+.provider-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent2);
+  background: rgba(55, 192, 242, 0.1);
+  border: 1px solid rgba(55, 192, 242, 0.22);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.provider-badge::before {
+  content: "🛰️";
+  font-size: 10px;
 }
 
 /* Stats */
@@ -479,7 +599,7 @@
   align-items: center;
   gap: 10px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--card);
   border-radius: 16px;
   padding: 12px 14px;
   /* CRITICAL: clip overflow so long text can't escape the box */
@@ -492,7 +612,7 @@
   flex: 1 1 0;
   min-width: 0;
   max-width: 100%;
-  color: #dbeafe;
+  color: var(--text);
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     monospace;
@@ -502,7 +622,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  scrollbar-color: var(--line2) transparent;
   /* Allow selecting text manually */
   cursor: text;
   user-select: text;
@@ -515,7 +635,7 @@
   height: 3px;
 }
 .export-value::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--line2);
   border-radius: 2px;
 }
 
@@ -592,7 +712,7 @@
   max-width: calc(100vw - 32px);
 
   border: 1px solid var(--line2);
-  background: rgba(14, 22, 38, 0.92);
+  background: var(--panel2);
   backdrop-filter: var(--blur);
   border-radius: 20px;
   box-shadow:
@@ -680,7 +800,7 @@ body.save-bar-open {
   flex-shrink: 0;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--card);
   cursor: pointer;
   transition:
     background var(--t),

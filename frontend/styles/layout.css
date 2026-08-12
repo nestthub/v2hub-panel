@@ -253,6 +253,22 @@
   gap: 4px;
 }
 
+/* Read-only source row (provider-owned subscriptions): no drag handle,
+   so drop the two leading grid tracks reserved for it. */
+.source-item-readonly {
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+}
+
+@media (max-width: 720px) {
+  .source-item-readonly {
+    grid-template-columns: 10px minmax(0, 1fr);
+    grid-template-areas:
+      "dot info"
+      "dot meta"
+      ". actions";
+  }
+}
+
 .source-comment {
   font-size: 12px;
   color: var(--muted);

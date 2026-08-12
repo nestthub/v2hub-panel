@@ -32,8 +32,8 @@ export function renderProviders() {
 
     empty.innerHTML = `
       <div class="empty-icon">🛰️</div>
-      <div class="empty-title">Пока провайдеров нет</div>
-      <div class="empty-sub">Список рекомендованных провайдеров будет добавлен позже</div>
+      <div class="empty-title">No providers yet</div>
+      <div class="empty-sub">Recommended VPN providers will appear here once configured</div>
     `;
 
     list.appendChild(empty);

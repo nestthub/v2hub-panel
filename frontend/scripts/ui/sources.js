@@ -45,9 +45,24 @@ export function switchTabUI(tab) {
     box.style.flexDirection = "column";
   }
 
-  if (tab === "sources") renderSources();
+  if (tab === "sources") {
+    applySourcesToolbarCapabilities();
+    renderSources();
+  }
   if (tab === "preview") renderPreview();
   if (tab === "export") renderExport();
+}
+
+/**
+ * Show/hide the "＋ Добавить источник" button and the reorder/readonly
+ * hint text based on the current subscription's capabilities.
+ */
+function applySourcesToolbarCapabilities() {
+  const caps = State.getCurrentCapabilities();
+
+  $("add-source-btn")?.classList.toggle("hidden", !caps.addSource);
+  $("sources-reorder-hint")?.classList.toggle("hidden", !caps.reorderSources);
+  $("sources-readonly-hint")?.classList.toggle("hidden", caps.reorderSources);
 }
 
 /**
@@ -62,11 +77,13 @@ export function renderSources() {
   const sources = State.getDraftSources();
   const list = $("sources-list");
   const hint = $("drag-hint");
+  const caps = State.getCurrentCapabilities();
 
   if (!list) return;
 
   clearChildren(list);
-  if (hint) hint.style.display = sources.length > 1 ? "block" : "none";
+  const canReorder = caps.reorderSources && sources.length > 1;
+  if (hint) hint.style.display = canReorder ? "block" : "none";
 
   if (!sources.length) {
     list.innerHTML = `
@@ -80,61 +97,118 @@ export function renderSources() {
   }
 
   sources.forEach((src, idx) => {
-    const item = document.createElement("div");
-    item.className = "source-item";
-    if (src.is_hidden) item.classList.add("is-source-hidden");
-    item.dataset.idx = idx;
-    item.dataset.id = src.id;
-    item.draggable = true;
-
-    const shortData = formatSource(src);
-
-    // FIX [High]: Весь innerHTML использует только escapeHtml — никаких onclick со значениями.
-    item.innerHTML = `
-      <div class="drag-handle" title="Переместить">⠿</div>
-      <div class="source-status"></div>
-      <div class="source-data" title="${escapeHtml(src.data)}">${escapeHtml(shortData)}</div>
-      <span class="badge-type ${inferBadgeClass(src.source_type)}">
-        ${escapeHtml(src.source_type || "config")}
-      </span>
-      <div class="source-actions">
-        <button
-          class="mini-btn eye-btn${src.is_hidden ? " is-hidden-on" : ""}"
-          type="button"
-          title="${src.is_hidden ? "Скрыт от пользователей — нажмите, чтобы показать" : "Виден пользователям — нажмите, чтобы скрыть"}"
-        >
-          ${src.is_hidden ? "🙈" : "👁"}
-        </button>
-        ${
-          src.source_type !== "config"
-            ? `
-          <button class="mini-btn refresh-btn" type="button" title="Обновить">↻</button>
-        `
-            : ""
-        }
-        <button class="mini-btn ctx-btn" type="button" title="Меню">⋯</button>
-      </div>
-    `;
-
-    // FIX: addEventListener вместо onclick-строк — src.id не попадает в HTML-атрибуты
-    const eyeBtn = item.querySelector(".eye-btn");
-    if (eyeBtn) {
-      eyeBtn.addEventListener("click", (e) => toggleSourceHidden(e, src.id));
+    if (caps.reorderSources) {
+      list.appendChild(buildFullSourceItem(src, idx));
+    } else {
+      list.appendChild(buildReadOnlySourceItem(src, idx));
     }
-
-    const ctxBtn = item.querySelector(".ctx-btn");
-    if (ctxBtn) {
-      ctxBtn.addEventListener("click", (e) => openCtxMenu(e, src.id));
-    }
-
-    const refreshBtn = item.querySelector(".refresh-btn");
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", (e) => refreshSource(e, refreshBtn));
-    }
-
-    setupDragHandlers(item, idx);
-    list.appendChild(item);
   });
+}
+
+/**
+ * Full-access source row: drag handle, visibility toggle, refresh (for
+ * non-config sources), and the "⋯" menu (copy / edit comment / delete).
+ * Used for subscriptions the user owns (caps.reorderSources === true).
+ */
+function buildFullSourceItem(src, idx) {
+  const item = document.createElement("div");
+  item.className = "source-item";
+  if (src.is_hidden) item.classList.add("is-source-hidden");
+  item.dataset.idx = idx;
+  item.dataset.id = src.id;
+  item.draggable = true;
+
+  const shortData = formatSource(src);
+
+  // FIX [High]: Весь innerHTML использует только escapeHtml — никаких onclick со значениями.
+  item.innerHTML = `
+    <div class="drag-handle" title="Переместить">⠿</div>
+    <div class="source-status"></div>
+    <div class="source-data" title="${escapeHtml(src.data)}">${escapeHtml(shortData)}</div>
+    <span class="badge-type ${inferBadgeClass(src.source_type)}">
+      ${escapeHtml(src.source_type || "config")}
+    </span>
+    <div class="source-actions">
+      <button
+        class="mini-btn eye-btn${src.is_hidden ? " is-hidden-on" : ""}"
+        type="button"
+        title="${src.is_hidden ? "Скрыт от пользователей — нажмите, чтобы показать" : "Виден пользователям — нажмите, чтобы скрыть"}"
+      >
+        ${src.is_hidden ? "🙈" : "👁"}
+      </button>
+      ${
+        src.source_type !== "config"
+          ? `
+        <button class="mini-btn refresh-btn" type="button" title="Обновить">↻</button>
+      `
+          : ""
+      }
+      <button class="mini-btn ctx-btn" type="button" title="Меню">⋯</button>
+    </div>
+  `;
+
+  // FIX: addEventListener вместо onclick-строк — src.id не попадает в HTML-атрибуты
+  const eyeBtn = item.querySelector(".eye-btn");
+  if (eyeBtn) {
+    eyeBtn.addEventListener("click", (e) => toggleSourceHidden(e, src.id));
+  }
+
+  const ctxBtn = item.querySelector(".ctx-btn");
+  if (ctxBtn) {
+    ctxBtn.addEventListener("click", (e) => openCtxMenu(e, src.id));
+  }
+
+  const refreshBtn = item.querySelector(".refresh-btn");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", (e) => refreshSource(e, refreshBtn));
+  }
+
+  setupDragHandlers(item, idx);
+  return item;
+}
+
+/**
+ * Read-only source row for provider-owned subscriptions: no drag handle,
+ * no visibility/refresh/menu — copy is the only available action.
+ *
+ * Kept as its own builder (rather than branching inside buildFullSourceItem)
+ * so future provider-subscription capabilities can be added here without
+ * touching the full-access path at all.
+ */
+function buildReadOnlySourceItem(src, idx) {
+  const item = document.createElement("div");
+  item.className = "source-item source-item-readonly";
+  if (src.is_hidden) item.classList.add("is-source-hidden");
+  item.dataset.idx = idx;
+  item.dataset.id = src.id;
+
+  const shortData = formatSource(src);
+
+  item.innerHTML = `
+    <div class="source-status"></div>
+    <div class="source-data" title="${escapeHtml(src.data)}">${escapeHtml(shortData)}</div>
+    <span class="badge-type ${inferBadgeClass(src.source_type)}">
+      ${escapeHtml(src.source_type || "config")}
+    </span>
+    <div class="source-actions">
+      <button class="mini-btn copy-btn-source" type="button" title="Копировать">⎘</button>
+    </div>
+  `;
+
+  const copyBtn = item.querySelector(".copy-btn-source");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const ok = await copyToClipboard(src.data);
+      showToast(
+        ok
+          ? "Источник скопирован"
+          : "Не удалось скопировать — выделите вручную",
+      );
+    });
+  }
+
+  return item;
 }
 
 /**
@@ -164,6 +238,7 @@ function setupDragHandlers(item, idx) {
 
   item.addEventListener("drop", (e) => {
     e.preventDefault();
+    if (!State.getCurrentCapabilities().reorderSources) return;
     const fromIdx = State.state.dragSrcIdx;
     const toIdx = idx;
     if (fromIdx === null || fromIdx === toIdx) return;
@@ -237,6 +312,10 @@ const addSourceEditor = createSourceListEditor("add-source-rows");
  * Open add source modal
  */
 export function openAddSourceModal() {
+  if (!State.getCurrentCapabilities().addSource) {
+    showToast("Нельзя добавлять источники в подписку провайдера");
+    return;
+  }
   document.querySelectorAll(".source-type-item").forEach((el) => {
     el.classList.toggle("selected", el.dataset.type === "config");
   });
@@ -267,6 +346,11 @@ export function addSourceRow() {
  * single global textarea with one comment-derived setting for everything.
  */
 export function addSource() {
+  if (!State.getCurrentCapabilities().addSource) {
+    showToast("Нельзя добавлять источники в подписку провайдера");
+    return;
+  }
+
   const payloadSources = addSourceEditor.toPayloadSources();
   if (!payloadSources.length) {
     showToast("Введите данные хотя бы одного источника");
@@ -334,6 +418,7 @@ export function addSource() {
  */
 export function toggleSourceHidden(e, srcId) {
   e.stopPropagation();
+  if (!State.getCurrentCapabilities().toggleSourceHidden) return;
 
   const arr = State.getDraftSources();
   const idx = arr.findIndex((s) => s.id === srcId);
@@ -434,6 +519,7 @@ function closeCtxMenu() {
 
 export function deleteSourceFromCtx() {
   closeCtxMenu();
+  if (!State.getCurrentCapabilities().deleteSource) return;
 
   const arr = State.getDraftSources();
   const idx = arr.findIndex((s) => s.id === State.state.ctxSourceId);
@@ -454,6 +540,7 @@ export function deleteSourceFromCtx() {
  */
 export function refreshSource(e, btn) {
   e.stopPropagation();
+  if (!State.getCurrentCapabilities().refreshSource) return;
   btn.innerHTML = '<span class="spinner"></span>';
   setTimeout(() => {
     btn.innerHTML = "↻";
@@ -724,6 +811,7 @@ let _editingSourceState = { is_hidden: false, max_depth: 3 };
  */
 export function editSourceCommentFromCtx() {
   closeCtxMenu();
+  if (!State.getCurrentCapabilities().editSourceComment) return;
 
   const arr = State.getDraftSources();
   const source = arr.find((s) => s.id === State.state.ctxSourceId);
@@ -816,6 +904,8 @@ export function stepSourceDepth(delta) {
  * sources; for external/internal links `data` is left untouched.
  */
 export function saveSourceComment() {
+  if (!State.getCurrentCapabilities().editSourceComment) return;
+
   const arr = State.getDraftSources();
   const idx = arr.findIndex((s) => s.id === State.state.ctxSourceId);
 

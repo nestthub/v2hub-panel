@@ -32,6 +32,7 @@ class SubscriptionInfo(BaseModel):
     token: str
     name: str
     description: str | None = None
+    provider_name: str | None = None
     sources: list[SourceInfo] = Field(default_factory=list)
     sources_count: int = 0
     public_url: str | None = None
