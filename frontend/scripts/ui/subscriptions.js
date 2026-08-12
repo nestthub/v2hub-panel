@@ -50,7 +50,90 @@ export function showLoadingList() {
 }
 
 /**
- * Render subscriptions list
+ * Build a single subscription card (shared by personal list and provider groups).
+ * @param {object} sub
+ * @param {number} colorSeed - index used to pick a stable avatar color
+ */
+function buildSubCard(sub, colorSeed) {
+  const card = createElement("button", {
+    type: "button",
+    class: "sub-card",
+    onclick: () => openEditor(sub.token),
+  });
+
+  const letter = ((sub.name || "?")[0] || "?").toUpperCase();
+  const sourcesCount = Number(
+    sub.sources_count ?? (sub.sources ? sub.sources.length : 0),
+  );
+
+  card.innerHTML = `
+    <div class="sub-avatar ${getAvatarColor(colorSeed)}">${escapeHtml(letter)}</div>
+    <div class="sub-info">
+      <div class="sub-name">${escapeHtml(sub.name || "—")}</div>
+      <div class="sub-desc">${escapeHtml(sub.description || "Без описания")}</div>
+    </div>
+    <div class="sub-meta">
+      <span>${sourcesCount} конф.</span>
+      <span class="chevron">›</span>
+    </div>
+  `;
+
+  return card;
+}
+
+// Which provider groups are currently expanded, keyed by provider_name.
+// Kept at module scope so the state survives re-renders (e.g. after save).
+const _expandedProviderGroups = new Set();
+
+/**
+ * Build a collapsible provider group: a header button (provider name + count)
+ * that expands/collapses to reveal that provider's subscriptions below it.
+ */
+function buildProviderGroup(group) {
+  const wrapper = createElement("div", { class: "provider-group" });
+  const isOpen = _expandedProviderGroups.has(group.providerName);
+
+  const header = createElement("button", {
+    type: "button",
+    class: "provider-group-header" + (isOpen ? " open" : ""),
+  });
+  header.innerHTML = `
+    <span class="provider-group-icon">🛰️</span>
+    <span class="provider-group-name">${escapeHtml(group.providerName)}</span>
+    <span class="provider-group-count">${group.subs.length}</span>
+    <span class="provider-group-chevron">›</span>
+  `;
+
+  const body = createElement("div", {
+    class: "provider-group-body" + (isOpen ? " open" : ""),
+  });
+  group.subs.forEach((sub, i) => {
+    body.appendChild(buildSubCard(sub, i));
+  });
+
+  header.addEventListener("click", () => {
+    const nowOpen = header.classList.toggle("open");
+    body.classList.toggle("open", nowOpen);
+    if (nowOpen) {
+      _expandedProviderGroups.add(group.providerName);
+    } else {
+      _expandedProviderGroups.delete(group.providerName);
+    }
+  });
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(body);
+  return wrapper;
+}
+
+/**
+ * Render subscriptions list.
+ *
+ * Personal (user-created) subscriptions are rendered first, exactly as
+ * before. Provider-supplied subscriptions (tagged with provider_name by
+ * the API) are rendered below, grouped and collapsed under one header
+ * button per provider — no extra requests, everything comes from the
+ * already-loaded State.state.subscriptions.
  */
 export function renderSubscriptionsList() {
   const list = $("subs-list");
@@ -81,32 +164,28 @@ export function renderSubscriptionsList() {
     return;
   }
 
-  items.forEach((sub, i) => {
-    const card = createElement("button", {
-      type: "button",
-      class: "sub-card",
-      onclick: () => openEditor(sub.token),
-    });
+  const { personal, providerGroups } = State.groupSubscriptionsByProvider();
 
-    const letter = ((sub.name || "?")[0] || "?").toUpperCase();
-    const sourcesCount = Number(
-      sub.sources_count ?? (sub.sources ? sub.sources.length : 0),
-    );
+  if (!personal.length && !providerGroups.length) {
+    list.innerHTML = `<div class="empty">
+         <div class="empty-icon">📭</div>
+         <div class="empty-title">Нет подписок</div>
+         <div class="empty-sub">Нажмите «＋ Создать», чтобы добавить первую подписку</div>
+       </div>`;
+    return;
+  }
 
-    card.innerHTML = `
-      <div class="sub-avatar ${getAvatarColor(i)}">${escapeHtml(letter)}</div>
-      <div class="sub-info">
-        <div class="sub-name">${escapeHtml(sub.name || "—")}</div>
-        <div class="sub-desc">${escapeHtml(sub.description || "Без описания")}</div>
-      </div>
-      <div class="sub-meta">
-        <span>${sourcesCount} конф.</span>
-        <span class="chevron">›</span>
-      </div>
-    `;
-
-    list.appendChild(card);
+  personal.forEach((sub, i) => {
+    list.appendChild(buildSubCard(sub, i));
   });
+
+  if (providerGroups.length) {
+    const section = createElement("div", { class: "provider-groups" });
+    providerGroups.forEach((group) => {
+      section.appendChild(buildProviderGroup(group));
+    });
+    list.appendChild(section);
+  }
 }
 
 /**
@@ -201,6 +280,19 @@ export async function loadSelectedSubscription(token, switchScreen = true) {
     setText($("editor-title"), data.name || "Подписка");
     setText($("editor-subtitle"), data.description || "mini app");
 
+    // Keep the cached list entry in sync so provider_name (and other
+    // fields) are consistent whether we read from the list or the
+    // freshly-fetched subscription.
+    const idx = State.state.subscriptions.findIndex((s) => s.token === token);
+    if (idx !== -1) {
+      State.state.subscriptions[idx] = {
+        ...State.state.subscriptions[idx],
+        ...data,
+      };
+    }
+
+    applyEditorCapabilities(data);
+
     if (switchScreen) {
       showScreen("screen-editor");
     }
@@ -226,6 +318,41 @@ export async function loadSelectedSubscription(token, switchScreen = true) {
   } finally {
     State.setLoadingEditor(false);
   }
+}
+
+/**
+ * Apply the editor UI to a subscription's capability set (see
+ * State.getSubscriptionCapabilities). This is the single place that
+ * decides which subscription-level controls (edit/delete/menu) are
+ * visible in the editor header — sources.js applies the equivalent
+ * per-source gating (hide/depth/delete/reorder) using the same
+ * capability set.
+ *
+ * @param {object} sub
+ */
+function applyEditorCapabilities(sub) {
+  const caps = State.getSubscriptionCapabilities(sub);
+  const isProvider = State.isProviderSubscription(sub);
+
+  const badge = $("editor-provider-badge");
+  if (badge) {
+    badge.classList.toggle("hidden", !isProvider);
+    if (isProvider) {
+      badge.textContent = sub.provider_name;
+    }
+  }
+
+  // "✎ Редактировать" (rename/description)
+  $("edit-sub-btn")?.classList.toggle("hidden", !caps.editSubscription);
+
+  // "⋯" menu — hide entirely when nothing inside it is actionable beyond
+  // the always-available "Обновить данные".
+  $("editor-menu-edit")?.classList.toggle("hidden", !caps.editSubscription);
+  $("editor-menu-delete")?.classList.toggle("hidden", !caps.deleteSubscription);
+  $("editor-menu-danger-divider")?.classList.toggle(
+    "hidden",
+    !caps.deleteSubscription,
+  );
 }
 
 /**
@@ -537,6 +664,10 @@ export async function createSubscription() {
 export function openEditSubModal() {
   const sub = State.getCurrentSubscription();
   if (!sub) return;
+  if (!State.getSubscriptionCapabilities(sub).editSubscription) {
+    showToast("Подписки провайдера нельзя редактировать");
+    return;
+  }
 
   setValue($("edit-sub-name"), sub.name || "");
   setValue($("edit-sub-desc"), sub.description || "");
@@ -550,6 +681,10 @@ export async function saveSubEdit() {
   try {
     const sub = State.getCurrentSubscription();
     if (!sub) return;
+    if (!State.getSubscriptionCapabilities(sub).editSubscription) {
+      showToast("Подписки провайдера нельзя редактировать");
+      return;
+    }
 
     const name = getValue($("edit-sub-name")).trim();
     if (!name) {
@@ -596,6 +731,10 @@ export async function saveSubEdit() {
 export async function deleteSubConfirm() {
   const sub = State.getCurrentSubscription();
   if (!sub) return;
+  if (!State.getSubscriptionCapabilities(sub).deleteSubscription) {
+    showToast("Подписки провайдера нельзя удалить");
+    return;
+  }
 
   if (!confirm(`Удалить подписку «${sub.name}»? Это действие необратимо.`)) {
     return;

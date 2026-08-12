@@ -32,6 +32,7 @@ def serialize_subscription(
         token=payload.get("token") or payload.get("id") or "",
         name=payload.get("name") or "",
         description=payload.get("description"),
+        provider_name=payload.get("provider_name"),
         sources=sources,
         sources_count=payload.get("sources_count", len(sources)),
     )

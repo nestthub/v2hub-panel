@@ -110,7 +110,7 @@
               class="icon-btn primary"
               type="button"
               onclick="openSettings()"
-              title="Settings"
+              title="Настройки"
             >
               ⚙️
             </button>
@@ -188,6 +188,10 @@
                   <div class="detail-subtitle" id="editor-subtitle">
                     mini app
                   </div>
+                  <div
+                    class="provider-badge hidden"
+                    id="editor-provider-badge"
+                  ></div>
                 </div>
                 <div
                   style="
@@ -209,6 +213,7 @@
                   <button
                     class="icon-btn"
                     type="button"
+                    id="editor-menu-btn"
                     onclick="openEditorMenu(event)"
                     title="Меню"
                   >
@@ -251,16 +256,21 @@
                 </button>
               </div>
               <div class="content tab-content" id="tab-sources">
-                <div class="sources-toolbar">
+                <div class="sources-toolbar" id="sources-toolbar">
                   <button
                     class="btn btn-secondary"
                     type="button"
+                    id="add-source-btn"
                     onclick="openAddSourceModal()"
                   >
                     ＋ Добавить источник
                   </button>
-                  <div class="hint">
+                  <div class="hint" id="sources-reorder-hint">
                     Перетаскивай источники за ручку слева, чтобы менять порядок.
+                  </div>
+                  <div class="hint hidden" id="sources-readonly-hint">
+                    Источники предоставлены провайдером — доступно только
+                    копирование.
                   </div>
                 </div>
                 <div class="sources-list" id="sources-list"></div>
@@ -305,13 +315,7 @@
                       Строка для клиентов, поддерживающих импорт подписок
                     </div>
                     <div class="export-box">
-                      <div
-                        class="export-value"
-                        id="export-b64"
-                        style="color: #cbd5e1"
-                      >
-                        —
-                      </div>
+                      <div class="export-value" id="export-b64">—</div>
                       <button
                         class="copy-btn"
                         type="button"
@@ -760,6 +764,7 @@
     <div class="editor-menu" id="editor-menu" style="min-width: 210px">
       <div
         class="editor-menu-item"
+        id="editor-menu-edit"
         onclick="
           openEditSubModal();
           closeEditorMenu();
@@ -776,9 +781,10 @@
       >
         ↻ Обновить данные
       </div>
-      <div class="editor-divider"></div>
+      <div class="editor-divider" id="editor-menu-danger-divider"></div>
       <div
         class="editor-menu-item danger"
+        id="editor-menu-delete"
         onclick="
           deleteSubConfirm();
           closeEditorMenu();

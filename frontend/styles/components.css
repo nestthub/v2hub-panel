@@ -99,6 +99,12 @@
   color: #ffd7df;
 }
 
+body.light-theme .btn-danger {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.22);
+  color: #b91c1c;
+}
+
 .btn-full {
   width: 100%;
   justify-content: center;
@@ -159,7 +165,7 @@
 }
 
 .input-field::placeholder {
-  color: #7488a0;
+  color: var(--hint);
 }
 .input-group {
   margin-bottom: 15px;
@@ -239,6 +245,25 @@
   border-color: rgba(92, 167, 255, 0.14);
 }
 
+/* Light theme: the pastel text colors above are tuned for a dark backdrop
+   and lose contrast against the light, near-white card background — use
+   darker shades of the same hues instead. */
+body.light-theme .badge-config {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  border-color: rgba(22, 163, 74, 0.22);
+}
+body.light-theme .badge-url {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+  border-color: rgba(217, 119, 6, 0.22);
+}
+body.light-theme .badge-token {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
 .connect-banner {
   margin-top: 14px;
   padding: 12px 14px;
@@ -273,6 +298,12 @@
   display: none;
 }
 
+body.light-theme .fixed-badge {
+  color: #6d28d9;
+  background: rgba(109, 40, 217, 0.1);
+  border-color: rgba(109, 40, 217, 0.24);
+}
+
 .input-fixed {
   opacity: 0.7;
   cursor: not-allowed;
@@ -296,6 +327,11 @@
 .mini-btn.eye-btn.is-hidden-on:hover {
   color: #fcd34d;
   background: rgba(251, 191, 36, 0.14);
+}
+
+body.light-theme .mini-btn.eye-btn.is-hidden-on:hover {
+  color: #b45309;
+  background: rgba(217, 119, 6, 0.14);
 }
 
 .source-item.is-source-hidden {

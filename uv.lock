@@ -1488,7 +1488,7 @@ wheels = [
 
 [[package]]
 name = "v2hub"
-version = "1.0.8"
+version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1496,14 +1496,14 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "twine" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ae/5d/bd91b464db62b6c6c6c8ed5fe1352655f492ae4ceb6646d3b6df4216dd56/v2hub-1.0.8.tar.gz", hash = "sha256:61c9396e7ba949ebbeac0e4c21b54f72ecda782460a9717becc76640c64f6f8d", size = 37779, upload-time = "2026-07-23T08:25:46.967Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/a5/6ab3b72531690193cb86013863fd424852a5abb88777dcba12f5af96b6e5/v2hub-1.1.1.tar.gz", hash = "sha256:011ab8a94599fdafdc891462ac34292728f38f171b7cee61c9ec3eb55f07d283", size = 45345, upload-time = "2026-08-10T05:42:01.093Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/62/ee938a9e94f585cc4fbcb88eb0fb29dcc4095159bf7fc52674ce9a2a50ba/v2hub-1.0.8-py3-none-any.whl", hash = "sha256:e1b203e29042f4e4b842904243797ca96468536414bfb90dbe1fc9a5a08adfd5", size = 27375, upload-time = "2026-07-23T08:25:45.663Z" },
+    { url = "https://files.pythonhosted.org/packages/db/20/e5d29c81758ceb0385b34773195946030165e4a8495e679819831e0787ef/v2hub-1.1.1-py3-none-any.whl", hash = "sha256:a2e7d9ff374d3fc27f4e42fe1edfd569a07657e4f43dbf02a68dd0ea6381e4da", size = 30495, upload-time = "2026-08-10T05:41:59.983Z" },
 ]
 
 [[package]]
 name = "v2hub-panel"
-version = "1.0.1"
+version = "1.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -1525,10 +1525,6 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "ruff" },
-]
-
-[package.dev-dependencies]
-dev = [
     { name = "types-qrcode" },
 ]
 
@@ -1547,13 +1543,11 @@ requires-dist = [
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.11.0" },
     { name = "qrcode", specifier = ">=8.0,<9.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "types-qrcode", marker = "extra == 'dev'", specifier = ">=8.2.0.20260518" },
     { name = "uvicorn", specifier = ">=0.32,<1.0" },
-    { name = "v2hub", specifier = ">=1.0.8" },
+    { name = "v2hub", specifier = ">=1.1.1" },
 ]
 provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "types-qrcode", specifier = ">=8.2.0.20260518" }]
 
 [[package]]
 name = "virtualenv"

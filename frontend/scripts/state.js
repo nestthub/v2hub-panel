@@ -54,6 +54,77 @@ export function getCurrentSubscription() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Subscription ownership / capabilities
+// ---------------------------------------------------------------------------
+
+/**
+ * A subscription is "provider-owned" when the server tags it with a
+ * provider_name. These are read-only catalog subscriptions surfaced by
+ * v2hub-core (see providers.js) — as opposed to subscriptions the user
+ * created themselves.
+ */
+export function isProviderSubscription(sub) {
+  return !!(sub && sub.provider_name);
+}
+
+/**
+ * Central capability registry for subscriptions.
+ *
+ * Every UI element that lets the user mutate a subscription or its sources
+ * should check the relevant capability here instead of re-deriving
+ * "is this a provider sub?" locally. This keeps the rule in one place and
+ * makes it easy to loosen restrictions per-capability later (e.g. allowing
+ * users to hide/reorder provider sources without allowing edits/deletes).
+ *
+ * user   — subscriptions created by the user via "＋ Создать" (full access)
+ * provider — subscriptions surfacing a provider_name (read-only + copy only)
+ */
+const CAPABILITIES = {
+  user: {
+    editSubscription: true, // rename / change description
+    deleteSubscription: true,
+    editSourceComment: true, // per-source comment/visibility/depth modal
+    toggleSourceHidden: true,
+    reorderSources: true,
+    addSource: true,
+    deleteSource: true,
+    refreshSource: true,
+    copySource: true,
+  },
+  provider: {
+    editSubscription: false,
+    deleteSubscription: false,
+    editSourceComment: false,
+    toggleSourceHidden: false,
+    reorderSources: false,
+    addSource: false,
+    deleteSource: false,
+    refreshSource: false,
+    copySource: true,
+  },
+};
+
+/**
+ * Get the capability set for a subscription.
+ * @param {object|null} sub
+ * @returns {typeof CAPABILITIES.user}
+ */
+export function getSubscriptionCapabilities(sub) {
+  return isProviderSubscription(sub)
+    ? CAPABILITIES.provider
+    : CAPABILITIES.user;
+}
+
+/**
+ * Convenience: capabilities for whatever subscription is currently open
+ * in the editor. Falls back to full (user) capabilities when nothing is
+ * selected, so callers that run before selection don't need a null check.
+ */
+export function getCurrentCapabilities() {
+  return getSubscriptionCapabilities(getCurrentSubscription());
+}
+
 export function setCurrentSubscription(token, sources) {
   state.currentSubToken = token;
   const normalized = normalizeSources(sources || []);
@@ -98,6 +169,36 @@ export function setLoadingList(loading) {
 }
 export function setLoadingEditor(loading) {
   state.loadingEditor = loading;
+}
+
+/**
+ * Split subscriptions into user-owned ones and provider-owned ones grouped
+ * by provider_name. No network calls — just partitions state.subscriptions,
+ * which is already fully loaded.
+ *
+ * @returns {{ personal: object[], providerGroups: { providerName: string, subs: object[] }[] }}
+ */
+export function groupSubscriptionsByProvider() {
+  const personal = [];
+  const groupsByName = new Map();
+
+  for (const sub of state.subscriptions) {
+    if (isProviderSubscription(sub)) {
+      const key = sub.provider_name;
+      if (!groupsByName.has(key)) groupsByName.set(key, []);
+      groupsByName.get(key).push(sub);
+    } else {
+      personal.push(sub);
+    }
+  }
+
+  const providerGroups = Array.from(groupsByName.entries()).map(
+    ([providerName, subs]) => ({ providerName, subs }),
+  );
+  // Stable, predictable ordering in the UI
+  providerGroups.sort((a, b) => a.providerName.localeCompare(b.providerName));
+
+  return { personal, providerGroups };
 }
 
 export function getStats() {

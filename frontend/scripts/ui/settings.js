@@ -104,7 +104,7 @@ function createSettingsModal() {
 
 
       <div class="modal-title">
-        ⚙️ Settings
+        ⚙️ Настройки
       </div>
 
 
@@ -116,12 +116,12 @@ function createSettingsModal() {
 
 
           <div class="setting-row-title">
-            Dark Theme
+            Темная тема
           </div>
 
 
           <div class="setting-row-hint">
-            Use dark mode across the entire UI
+            Выбирайте тему, которая вам по душе. (Светлая тема может содержать ошибки с палитрой)
           </div>
 
 
