@@ -1,6 +1,12 @@
 """V2Hub Mini App - Professional VPN subscription management application."""
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .main import app
 
-__version__ = "1.0.1"
+try:
+    __version__ = version("v2hub-panel")
+except PackageNotFoundError:
+    __version__ = "unknown"
+
 __all__ = ["app"]

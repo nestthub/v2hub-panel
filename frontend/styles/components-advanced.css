@@ -126,10 +126,12 @@
   border-radius: 16px;
   display: grid;
   place-items: center;
-  color: #fff;
-  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
   flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .av-blue {
@@ -399,6 +401,7 @@
 }
 
 .source-data {
+  min-width: 0;
   color: var(--text);
   font-size: 13px;
   font-family:

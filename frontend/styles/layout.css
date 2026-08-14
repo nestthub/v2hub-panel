@@ -255,17 +255,41 @@
 
 /* Read-only source row (provider-owned subscriptions): no drag handle,
    so drop the two leading grid tracks reserved for it. */
-.source-item-readonly {
+.source-item.source-item-readonly {
   grid-template-columns: 10px minmax(0, 1fr) auto auto;
 }
 
 @media (max-width: 720px) {
-  .source-item-readonly {
+  .source-item.source-item-readonly {
     grid-template-columns: 10px minmax(0, 1fr);
     grid-template-areas:
       "dot info"
       "dot meta"
-      ". actions";
+      ".   actions";
+    align-items: start;
+    row-gap: 4px;
+  }
+
+  .source-item.source-item-readonly > .source-status {
+    grid-area: dot;
+    align-self: start;
+    margin-top: 4px;
+  }
+
+  .source-item.source-item-readonly > .source-data {
+    grid-area: info;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .source-item.source-item-readonly > .badge-type {
+    grid-area: meta;
+    justify-self: start;
+  }
+
+  .source-item.source-item-readonly > .source-actions {
+    grid-area: actions;
+    justify-self: end;
   }
 }
 

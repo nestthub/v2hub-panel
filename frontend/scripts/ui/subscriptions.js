@@ -14,7 +14,6 @@ import {
 } from "../utils/dom.js";
 import {
   escapeHtml,
-  getAvatarColor,
   splitLines,
   clampDepth,
   detectSourceType,
@@ -51,23 +50,24 @@ export function showLoadingList() {
 
 /**
  * Build a single subscription card (shared by personal list and provider groups).
+ * Shows a folder icon (✉️ closed / 📩 open) instead of a photo/initial avatar.
  * @param {object} sub
- * @param {number} colorSeed - index used to pick a stable avatar color
  */
-function buildSubCard(sub, colorSeed) {
+function buildSubCard(sub) {
   const card = createElement("button", {
     type: "button",
     class: "sub-card",
     onclick: () => openEditor(sub.token),
   });
 
-  const letter = ((sub.name || "?")[0] || "?").toUpperCase();
   const sourcesCount = Number(
     sub.sources_count ?? (sub.sources ? sub.sources.length : 0),
   );
+  const isOpen = sub.token === State.state.currentSubToken;
+  const folderIcon = isOpen ? "📩" : "✉️";
 
   card.innerHTML = `
-    <div class="sub-avatar ${getAvatarColor(colorSeed)}">${escapeHtml(letter)}</div>
+    <div class="sub-avatar">${folderIcon}</div>
     <div class="sub-info">
       <div class="sub-name">${escapeHtml(sub.name || "—")}</div>
       <div class="sub-desc">${escapeHtml(sub.description || "Без описания")}</div>
@@ -292,6 +292,10 @@ export async function loadSelectedSubscription(token, switchScreen = true) {
     }
 
     applyEditorCapabilities(data);
+
+    // Re-render the list so this subscription's icon flips ✉️ → 📩
+    // (desktop keeps the list visible next to the open editor).
+    renderSubscriptionsList();
 
     if (switchScreen) {
       showScreen("screen-editor");

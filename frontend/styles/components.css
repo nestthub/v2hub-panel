@@ -228,6 +228,8 @@ body.light-theme .btn-danger {
   text-align: center;
   border: 1px solid transparent;
   white-space: nowrap;
+  flex-shrink: 0;
+  justify-self: end;
 }
 .badge-config {
   background: rgba(74, 222, 128, 0.12);
