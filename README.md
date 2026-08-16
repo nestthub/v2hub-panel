@@ -29,17 +29,25 @@ v2hub_panel/
 │
 ├── src/
 │   └── v2hub_panel/
-│       ├── main.py              # FastAPI entrypoint
-│       ├── config.py            # Environment configuration
+│       ├── main.py              # FastAPI entrypoint (app, /, /metrics, exception handlers)
+│       ├── config.py            # Environment configuration (Settings, env_prefix=V2HUB_)
 │       │
 │       ├── routes/
-│       │   ├── public.py
-│       │   ├── connection.py
-│       │   └── subscriptions.py
+│       │   ├── connection.py    # /api/config, /api/health
+│       │   ├── public.py        # /sub/{token}, /api/subscriptions/{token}/qr.png
+│       │   └── subscriptions.py # /api/subscriptions/...
 │       │
-│       ├── models/              # Pydantic schemas
-│       ├── services/            # Business logic
+│       ├── models/
+│       │   ├── requests.py      # CredentialsMixin, SourceEntry, *Request schemas
+│       │   └── responses.py     # ConnectionInfo, SubscriptionInfo, *Response schemas
+│       │
+│       ├── services/
+│       │   ├── connection.py    # make_async_client, make_public_client, resolve_base_url
+│       │   └── subscription.py  # serialize_subscription, serialize_public_subscription
+│       │
 │       └── utils/
+│           ├── exceptions.py    # with_error_mapping (v2hub errors -> HTTPException)
+│           └── helpers.py       # clean_source_entries, get_public_subscription_url
 │
 ├── frontend/
 │   ├── index.html
@@ -51,9 +59,9 @@ v2hub_panel/
 │   └── test_*.py
 │
 ├── nginx/
-│   ├── default.conf.template    # nginx template
+│   ├── default.conf.template    # nginx envsubst template (see Nginx section for current mount caveat)
 │   ├── proxy_params             # proxy headers
-│   └── grafana.htpasswd
+│   └── grafana.htpasswd         # created at deploy time, not tracked in the repo — required by the template's auth_basic directive
 │
 ├── monitoring/
 │   ├── alloy/
@@ -65,7 +73,7 @@ v2hub_panel/
 │   ├── prometheus.yml
 │   └── loki.yml
 │
-├── certbot/
+├── certbot/                     # created at deploy time, not tracked in the repo
 │   ├── conf/
 │   └── www/
 │
@@ -87,7 +95,7 @@ Install:
 
 - Docker
 - Docker Compose plugin
-- Python 3.12+
+- Python 3.11+
 - uv
 
 ---
@@ -105,8 +113,12 @@ Edit values:
 ```env
 V2HUB_FIXED_API_URL=
 V2HUB_LOG_LEVEL=DEBUG
-V2HUB_CORS_ORIGINS=*
+V2HUB_CORS_ORIGINS=["*"]
 ```
+
+> **Note**: All backend-read variables use the `V2HUB_` prefix (`config.py` sets `env_prefix="V2HUB_"`). `.env.example` currently ships `FIXED_API_URL` (no prefix) instead of `V2HUB_FIXED_API_URL` — use the prefixed name for it to actually be picked up by the app.
+>
+> `DOMAIN`, `BACKEND_HOST`, `BACKEND_PORT`, `GRAFANA_HOST`, `GRAFANA_PORT` are consumed by nginx's `envsubst` templating (not the FastAPI app) and are correctly unprefixed — see [Nginx](#nginx) below.
 
 ---
 
@@ -189,7 +201,7 @@ Grafana Explore
 
 # Nginx
 
-Nginx uses templates.
+The nginx config is written as an `envsubst` template — see the header comment in `nginx/default.conf.template`, which lists the required variables (`DOMAIN`, `BACKEND_HOST`, `BACKEND_PORT`, `GRAFANA_HOST`, `GRAFANA_PORT`).
 
 Source:
 
@@ -197,25 +209,21 @@ Source:
 nginx/default.conf.template
 ```
 
-Mounted into:
-
-```
-/etc/nginx/templates/default.conf.template
-```
-
-The official nginx image automatically runs:
-
-```
-envsubst
-```
-
-and generates:
+**As currently wired in `docker-compose.yml`**, this file is mounted directly to:
 
 ```
 /etc/nginx/conf.d/default.conf
 ```
 
-Check generated config:
+which is a plain nginx config path — nginx does **not** run `envsubst` on it there, so the `${VAR}` placeholders are left literal unless you change the mount. The official nginx image only auto-renders templates placed under:
+
+```
+/etc/nginx/templates/*.template
+```
+
+and writes the rendered result to `/etc/nginx/conf.d/`. If you want the templating to actually happen, mount the file to `/etc/nginx/templates/default.conf.template` instead (and drop the `.template` extension expectation for the output path) — otherwise, populate `nginx/default.conf.template` with literal values instead of `${VAR}` placeholders before building.
+
+Check generated/active config:
 
 ```bash
 docker exec -it v2hub_nginx cat /etc/nginx/conf.d/default.conf
@@ -381,6 +389,8 @@ Response:
 
 # API
 
+All endpoints proxy to a v2hub-api server. `base_url` and `api_token` are supplied by the frontend on (almost) every call — this panel is stateless and never stores them server-side.
+
 ## Public
 
 ```
@@ -390,10 +400,22 @@ GET /
 Frontend SPA
 
 ```
-GET /sub/{token}
+GET /sub/{token}?base_url=<url>
 ```
 
-Subscription content
+Resolves a subscription's public content via the upstream server (no `api_token` required)
+
+```
+GET /api/subscriptions/{token}/qr.png?base_url=<url>
+```
+
+QR code (PNG) for a subscription's public URL
+
+```
+GET /api/config
+```
+
+Server-side frontend config (currently just `fixed_api_url`)
 
 ```
 GET /api/health
@@ -401,15 +423,27 @@ GET /api/health
 
 Health check
 
+```
+GET /metrics
+```
+
+Prometheus metrics (scraped internally — see [Monitoring](#monitoring))
+
 ## Subscription API
 
+All of these require `base_url` and `api_token` in the JSON request body (via `CredentialsMixin`), since the panel itself holds no credentials.
+
 ```
-POST /api/subscriptions
-POST /api/subscriptions/new
-POST /api/subscriptions/{token}
-PATCH /api/subscriptions/{token}
-DELETE /api/subscriptions/{token}
+POST   /api/subscriptions                          # list
+POST   /api/subscriptions/new                       # create
+POST   /api/subscriptions/{token}                   # get
+PATCH  /api/subscriptions/{token}                   # update
+DELETE /api/subscriptions/{token}                    # delete
+POST   /api/subscriptions/{token}/sources/add        # add sources
+POST   /api/subscriptions/{token}/sources/replace    # replace all sources
 ```
+
+> Note: `list`/`get`/`delete` use `POST`/`DELETE` with a JSON body (not query params) purely to carry `base_url`/`api_token` — `list` and `get` are read-only despite the `POST` verb.
 
 ---
 
