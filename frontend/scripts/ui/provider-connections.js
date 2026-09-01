@@ -349,16 +349,32 @@ async function handleRevoke(providerName, button) {
 }
 
 /**
- * State Synchronization (issue #11 section 5): after any successful
+ * State Synchronization (issue #11 section 5 & 6): after any successful
  * approve/reject/revoke, refetch from the backend rather than inferring
  * the new state locally, then update every UI surface that depends on
- * connection state — the editor badge, the pending-providers section,
- * and the modal itself.
+ * connection state — the subscriptions list (so a provider that just
+ * lost its connection doesn't keep sitting there as a stale, unusable
+ * group), the editor badge, the pending-providers section, and the
+ * modal itself.
  */
 async function refreshAfterChange(providerName) {
-  // Refresh the pending-providers list first; independent of whether the
-  // modal stays open, and cheap even if the provider no longer appears.
-  await renderPendingProviders();
+  // Reload subscriptions from the server: whether a revoked/rejected
+  // provider's subscriptions still show up (and whether a newly
+  // approved provider's subscriptions now appear) is a server-side
+  // decision, not something to guess at client-side. This also
+  // re-renders the pending-providers section as part of the same pass
+  // (see reloadAll()), so it isn't refreshed separately here.
+  //
+  // Dynamic import avoids a static import cycle: subscriptions.js
+  // imports this module to open the provider modal from a group header
+  // click (issue #11 item 4).
+  const { reloadAll } = await import("./subscriptions.js");
+  try {
+    await reloadAll();
+  } catch {
+    // reloadAll() already handles its own errors (shows the
+    // disconnected empty state); nothing further to do here.
+  }
 
   let latest = null;
   try {
@@ -366,8 +382,7 @@ async function refreshAfterChange(providerName) {
   } catch (e) {
     // The connection lookup itself failing after a successful action is
     // unusual (e.g. transient network blip) — close the modal rather
-    // than show stale/incorrect info, the pending list above is already
-    // current.
+    // than show stale/incorrect info, the list above is already current.
     closeModal("modal-provider-connection");
     return;
   }
@@ -453,43 +468,28 @@ export async function renderPendingProviders() {
   });
 }
 
+/**
+ * A pending request is shown collapsed, mirroring the provider
+ * subscription groups above it (same icon/name/chevron header shape) —
+ * clicking the row opens the same connection modal used everywhere else
+ * in the app, where the user reviews the request and approves/rejects it.
+ * There's no separate inline approve/reject affordance here: one place
+ * to review + act keeps the two entry points (badge, pending list) from
+ * needing two different action UIs.
+ */
 function buildPendingProviderRow(connection) {
-  const row = createElement("div", { class: "pending-provider-row" });
-
-  const info = createElement("div", { class: "pending-provider-info" });
-  info.innerHTML = `
-    <div class="pending-provider-name">${escapeHtml(connection.provider_name)}</div>
-    ${
-      connection.provider_url
-        ? `<div class="pending-provider-url">${escapeHtml(connection.provider_url)}</div>`
-        : ""
-    }
-    <span class="status-pill status-pill-pending">Ожидает подтверждения</span>
+  const row = createElement("button", {
+    type: "button",
+    class: "provider-group-header pending-provider-header",
+  });
+  row.innerHTML = `
+    <span class="provider-group-icon">🛰️</span>
+    <span class="provider-group-name">${escapeHtml(connection.provider_name)}</span>
+    <span class="status-pill status-pill-pending status-pill-compact">Ожидает</span>
+    <span class="provider-group-chevron">›</span>
   `;
-
-  const actions = createElement("div", { class: "pending-provider-actions" });
-  const approveBtn = createElement(
-    "button",
-    { class: "btn btn-primary btn-sm", type: "button" },
-    "Одобрить",
+  row.addEventListener("click", () =>
+    openConnectionModalFor(connection.provider_name),
   );
-  const rejectBtn = createElement(
-    "button",
-    { class: "btn btn-danger btn-primary btn-sm", type: "button" },
-    "Отклонить",
-  );
-
-  approveBtn.addEventListener("click", () =>
-    handleApprove(connection.provider_name, [approveBtn, rejectBtn]),
-  );
-  rejectBtn.addEventListener("click", () =>
-    handleReject(connection.provider_name, [approveBtn, rejectBtn]),
-  );
-
-  actions.appendChild(approveBtn);
-  actions.appendChild(rejectBtn);
-
-  row.appendChild(info);
-  row.appendChild(actions);
   return row;
 }

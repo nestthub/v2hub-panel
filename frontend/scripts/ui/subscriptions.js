@@ -12,16 +12,14 @@ import {
   clearChildren,
   createElement,
 } from "../utils/dom.js";
-import {
-  escapeHtml,
-  splitLines,
-  clampDepth,
-  detectSourceType,
-} from "../utils/helpers.js";
+import { escapeHtml, clampDepth, detectSourceType } from "../utils/helpers.js";
 import { createSourceListEditor } from "../utils/source-list-editor.js";
 import { showToast, showError } from "./toast.js";
 import { openModal, closeModal } from "./modals.js";
-import { renderPendingProviders } from "./provider-connections.js";
+import {
+  renderPendingProviders,
+  openConnectionModalFor,
+} from "./provider-connections.js";
 
 /**
  * Update connection status display in topbar icon
@@ -87,23 +85,49 @@ function buildSubCard(sub) {
 const _expandedProviderGroups = new Set();
 
 /**
- * Build a collapsible provider group: a header button (provider name + count)
- * that expands/collapses to reveal that provider's subscriptions below it.
+ * Build a collapsible provider group: a header (provider name + count)
+ * that expands/collapses to reveal that provider's subscriptions below
+ * it. The icon+name portion of the header is its own clickable zone that
+ * opens the provider connection modal (issue #11 item 4) — separate from
+ * the rest of the header, which toggles expand/collapse, so the two
+ * actions don't fight over the same click.
  */
 function buildProviderGroup(group) {
   const wrapper = createElement("div", { class: "provider-group" });
   const isOpen = _expandedProviderGroups.has(group.providerName);
 
-  const header = createElement("button", {
-    type: "button",
+  const header = createElement("div", {
     class: "provider-group-header" + (isOpen ? " open" : ""),
+    role: "button",
+    tabindex: "0",
   });
-  header.innerHTML = `
+
+  const infoBtn = createElement("button", {
+    type: "button",
+    class: "provider-group-info-btn",
+    title: `Информация о провайдере «${group.providerName}»`,
+  });
+  infoBtn.innerHTML = `
     <span class="provider-group-icon">🛰️</span>
     <span class="provider-group-name">${escapeHtml(group.providerName)}</span>
+  `;
+  infoBtn.addEventListener("click", (e) => {
+    // Own click zone: open the provider info modal, and don't also
+    // trigger the expand/collapse toggle bound below on the row.
+    e.stopPropagation();
+    openConnectionModalFor(group.providerName);
+  });
+
+  const toggleZone = createElement("span", {
+    class: "provider-group-toggle-zone",
+  });
+  toggleZone.innerHTML = `
     <span class="provider-group-count">${group.subs.length}</span>
     <span class="provider-group-chevron">›</span>
   `;
+
+  header.appendChild(infoBtn);
+  header.appendChild(toggleZone);
 
   const body = createElement("div", {
     class: "provider-group-body" + (isOpen ? " open" : ""),
@@ -112,13 +136,21 @@ function buildProviderGroup(group) {
     body.appendChild(buildSubCard(sub, i));
   });
 
-  header.addEventListener("click", () => {
+  function toggle() {
     const nowOpen = header.classList.toggle("open");
     body.classList.toggle("open", nowOpen);
     if (nowOpen) {
       _expandedProviderGroups.add(group.providerName);
     } else {
       _expandedProviderGroups.delete(group.providerName);
+    }
+  }
+
+  header.addEventListener("click", toggle);
+  header.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle();
     }
   });
 
