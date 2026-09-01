@@ -22,6 +22,14 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
+
+  /* `background-attachment: fixed` (set in base.css for desktop) is a
+     known source of white gaps / a "detached" background above and below
+     the content in mobile WebViews -- especially Telegram's in-app
+     browser, where the viewport height changes as its own chrome shows
+     or hides. Scrolling the background with the page avoids that
+     mismatch and is the standard mobile-safe fallback. */
+  background-attachment: scroll !important;
 }
 
 /* Root app shell should not trap scroll */

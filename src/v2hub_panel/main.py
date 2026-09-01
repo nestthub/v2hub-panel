@@ -201,7 +201,18 @@ def _compute_asset_version(frontend_dir: Path) -> str:
 
 ASSET_VERSION = _compute_asset_version(settings.frontend_dir)
 
+# Matches src="/static/..." / href="/static/..." in HTML.
 _ASSET_SRC_RE = re.compile(r'((?:src|href)=")(/static/[^"?]+)(")')
+
+# Matches ES-module specifiers inside .js files: import ... from "./x.js",
+# export ... from "../y.js", dynamic import("./z.js"). Only relative
+# specifiers (./ or ../) are touched -- bare specifiers (npm packages,
+# absolute URLs) are left alone.
+_JS_IMPORT_RE = re.compile(r"""(from\s+["']|import\(\s*["'])(\.\.?/[^"'?]+\.[cm]?js)(["'])""")
+
+# Matches @import / url(...) with relative paths inside .css files, in case
+# styles ever start importing each other or referencing local assets.
+_CSS_URL_RE = re.compile(r"""(url\(["']?)(\.\.?/[^"')?]+)(["']?\))""")
 
 
 def _inject_asset_version(html: str, version: str) -> str:
@@ -209,15 +220,100 @@ def _inject_asset_version(html: str, version: str) -> str:
     return _ASSET_SRC_RE.sub(rf"\1\2?v={version}\3", html)
 
 
+def _inject_js_import_version(source: str, version: str) -> str:
+    """
+    Append ?v=<version> to every relative ES-module specifier inside a
+    JS file (import/export ... from "./x.js", dynamic import("./x.js")).
+
+    This closes the gap left by _inject_asset_version: that function only
+    rewrites the <script src="..."> / <link href="..."> tags in index.html,
+    i.e. the entry point. Everything the entry point imports via native ES
+    module `import` statements was previously served with NO version query
+    param at all, so browsers/WebViews cache each module file under its own
+    bare URL -- independent from whichever version of the entry script
+    referenced it. Combined with the long-lived immutable Cache-Control
+    below, that let a stale transitive module (e.g. state.js) linger
+    indefinitely in a WebView cache after a new main.js was already
+    loaded, causing "X is not a function" errors for newly added exports.
+    Versioning the whole import graph, not just the entry point, is what
+    makes cache-busting actually reliable end-to-end.
+    """
+    return _JS_IMPORT_RE.sub(rf"\1\2?v={version}\3", source)
+
+
+def _inject_css_url_version(source: str, version: str) -> str:
+    """Append ?v=<version> to relative url()/@import references in CSS."""
+    return _CSS_URL_RE.sub(rf"\1\2?v={version}\3", source)
+
+
+_TEXT_MEDIA_TYPES = {
+    ".js": "application/javascript",
+    ".mjs": "application/javascript",
+    ".css": "text/css",
+}
+
+
+async def _versioned_static_asset(request: Request) -> Response:
+    """
+    Serve .js/.css files under /static with their internal relative
+    references rewritten to carry the same ?v=<version> cache-busting
+    query param as the HTML entry point, so the whole module/import graph
+    is versioned consistently -- not just the top-level <script>/<link>
+    tags. Falls through to a 404 for missing files; all other static
+    assets (images, fonts, etc.) keep being served directly by StaticFiles
+    below.
+    """
+    rel_path = request.path_params["path"]
+    file_path = (settings.frontend_dir / rel_path).resolve()
+
+    # Prevent path traversal outside the frontend directory.
+    try:
+        file_path.relative_to(settings.frontend_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found") from None
+
+    suffix = file_path.suffix.lower()
+    if suffix not in _TEXT_MEDIA_TYPES or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Not found")
+
+    source = file_path.read_text(encoding="utf-8")
+    if suffix in (".js", ".mjs"):
+        source = _inject_js_import_version(source, ASSET_VERSION)
+    elif suffix == ".css":
+        source = _inject_css_url_version(source, ASSET_VERSION)
+
+    return Response(
+        content=source,
+        media_type=_TEXT_MEDIA_TYPES[suffix],
+        headers={
+            # Safe to cache aggressively: every relative reference inside
+            # this file now carries the same content-hash ?v=... query
+            # param, so a changed file (or a changed file it imports)
+            # gets a new URL rather than needing this cache to expire.
+            "Cache-Control": "public, max-age=31536000, immutable",
+        },
+    )
+
+
 if settings.frontend_dir.exists():
+    # .js/.css get their own route so we can rewrite relative import/url
+    # references inside them (see _versioned_static_asset above). This
+    # must be registered before the catch-all StaticFiles mount so it
+    # takes precedence for those extensions.
+    app.add_api_route(
+        "/static/{path:path}",
+        _versioned_static_asset,
+        methods=["GET"],
+        include_in_schema=False,
+    )
+
     app.mount(
         "/static",
         StaticFiles(
             directory=str(settings.frontend_dir),
-            # Safe to cache aggressively: every reference to a static
-            # asset now carries a content-hash ?v=... query param (see
-            # _inject_asset_version), so a changed file gets a new URL
-            # rather than needing this cache to expire/revalidate.
+            # Non-text assets (images, fonts, ...) are still referenced
+            # only from index.html / already-versioned CSS & JS, so the
+            # entry-point ?v=... query param is enough for these.
         ),
         name="static",
     )

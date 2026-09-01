@@ -28,9 +28,20 @@ async function init() {
     // Load theme before rendering UI
     loadSavedTheme();
 
-    // Telegram Mini App expand
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.expand();
+    // Telegram Mini App expand.
+    // Isolated in its own try/catch: window.Telegram.WebApp exists
+    // whenever telegram-web-app.js loads (regular mobile browser,
+    // Telegram's plain in-app browser, or a real Mini App), but calling
+    // its methods outside an actual Mini App session can throw. If that
+    // throw happened inside the outer try below, it would abort the
+    // rest of init() -- including setupModalHandlers(), loading server
+    // config, and auto-filling the connect form -- which is why buttons
+    // could appear unresponsive specifically in that context.
+    try {
+      window.Telegram?.WebApp?.ready?.();
+      window.Telegram?.WebApp?.expand?.();
+    } catch (error) {
+      console.warn("Telegram WebApp API unavailable:", error);
     }
 
     // Setup modal events
@@ -254,6 +265,21 @@ window.goBackToList = Providers.goBackToList;
 
 window.openSettings = openSettings;
 
+// Safety net: bind the two topbar buttons (settings, connect) by id via
+// addEventListener as well as relying on their inline onclick. Belt and
+// braces for embedded WebViews (e.g. Telegram's plain in-app browser)
+// where inline handlers have occasionally been observed not firing
+// reliably if this module is slow to finish evaluating; addEventListener
+// attaches independently of that and costs nothing when onclick already
+// works fine.
+function bindTopbarFallbacks() {
+  $("btn-settings")?.addEventListener("click", () => openSettings());
+  $("btn-connect")?.addEventListener("click", () =>
+    Subscriptions.openConnectModal(),
+  );
+}
+
 // Start application
 
+onReady(bindTopbarFallbacks);
 init();

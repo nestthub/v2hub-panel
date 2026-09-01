@@ -16,7 +16,13 @@ from __future__ import annotations
 import re
 
 from v2hub_panel.config import settings
-from v2hub_panel.main import ASSET_VERSION, _compute_asset_version, _inject_asset_version
+from v2hub_panel.main import (
+    ASSET_VERSION,
+    _compute_asset_version,
+    _inject_asset_version,
+    _inject_css_url_version,
+    _inject_js_import_version,
+)
 
 
 class TestComputeAssetVersion:
@@ -113,6 +119,93 @@ class TestInjectAssetVersion:
         # should give the same result -- this just confirms determinism.
         again = _inject_asset_version(html, "v1")
         assert once == again
+
+
+class TestInjectJsImportVersion:
+    """
+    Regression tests for the bug where main.js?v=X was cache-busted but
+    its own `import ... from "./state.js"` was not -- so a WebView could
+    serve a fresh main.js alongside a stale state.js it had cached from a
+    previous deploy under the bare (unversioned) URL, producing errors
+    like "State.groupSubscriptionsByProvider is not a function" even
+    though the function existed in the current source.
+    """
+
+    def test_versions_named_import(self):
+        src = 'import * as State from "./state.js";'
+        result = _inject_js_import_version(src, "abc123")
+        assert result == 'import * as State from "./state.js?v=abc123";'
+
+    def test_versions_parent_relative_import(self):
+        src = 'import { $ } from "../utils/dom.js";'
+        result = _inject_js_import_version(src, "abc123")
+        assert "./dom.js?v=abc123" not in result  # sanity: not double-matched
+        assert '"../utils/dom.js?v=abc123"' in result
+
+    def test_versions_dynamic_import(self):
+        src = 'const mod = await import("./lazy.js");'
+        result = _inject_js_import_version(src, "abc123")
+        assert 'import("./lazy.js?v=abc123")' in result
+
+    def test_multiple_imports_all_versioned(self):
+        src = (
+            'import * as A from "./a.js";\n'
+            'import * as B from "./b.js";\n'
+            'export { C } from "./c.js";\n'
+        )
+        result = _inject_js_import_version(src, "xyz")
+        assert result.count("?v=xyz") == 3
+
+    def test_bare_specifiers_untouched(self):
+        """Non-relative (bare/package/absolute-URL) specifiers are left alone."""
+        src = 'import _ from "lodash";\nimport x from "https://cdn.example/x.js";'
+        result = _inject_js_import_version(src, "abc123")
+        assert result == src
+
+    def test_idempotent_style_determinism(self):
+        src = 'import * as State from "./state.js";'
+        once = _inject_js_import_version(src, "v1")
+        again = _inject_js_import_version(src, "v1")
+        assert once == again
+
+
+class TestInjectCssUrlVersion:
+    def test_versions_relative_url(self):
+        src = ".x { background: url(./bg.png); }"
+        result = _inject_css_url_version(src, "abc123")
+        assert "url(./bg.png?v=abc123)" in result
+
+    def test_absolute_and_data_urls_untouched(self):
+        src = ".x { background: url(/static/img.png); } .y { background: url(data:image/png;base64,AAA); }"
+        result = _inject_css_url_version(src, "abc123")
+        assert result == src
+
+
+class TestVersionedStaticAssetRoute:
+    def test_js_response_has_versioned_relative_imports(self, client):
+        resp = client.get("/static/scripts/main.js")
+        assert resp.status_code == 200
+        # Every relative import in main.js should now carry the current
+        # ASSET_VERSION, not just the <script src> tag that loaded it.
+        imports = re.findall(r'from\s+"(\.\.?/[^"]+)"', resp.text)
+        assert imports, "expected at least one relative import in main.js"
+        for spec in imports:
+            assert f"?v={ASSET_VERSION}" in spec, (
+                f"{spec} is missing the cache-busting version -- this is "
+                "exactly the gap that caused stale transitive modules in "
+                "Telegram's WebView cache"
+            )
+
+    def test_transitively_imported_module_is_versioned_too(self, client):
+        """
+        state.js is imported by main.js (and others) but never referenced
+        directly from index.html -- confirms the fix covers the whole
+        graph, not just files one hop from the entry point.
+        """
+        resp = client.get("/static/scripts/state.js")
+        assert resp.status_code == 200
+        cache_control = resp.headers.get("cache-control", "")
+        assert "immutable" in cache_control
 
 
 class TestIndexRouteCacheBusting:

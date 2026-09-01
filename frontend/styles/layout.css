@@ -4,6 +4,7 @@
 
 .app-shell {
   min-height: 100vh;
+  min-height: 100dvh; /* actual visible height in mobile WebViews (Telegram, etc.) */
   width: 100%;
   display: flex;
   justify-content: center;
