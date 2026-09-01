@@ -173,6 +173,17 @@
                   Провайдеры
                 </button>
               </div>
+              <div class="section hidden" id="pending-providers-section">
+                <div class="pending-providers-header">
+                  <span class="pending-providers-title"
+                    >Заявки провайдеров</span
+                  >
+                </div>
+                <div
+                  class="pending-providers-list"
+                  id="pending-providers-list"
+                ></div>
+              </div>
               <div class="list" id="subs-list"></div>
               <div class="connect-banner">
                 Публичная ссылка, Base64 и QR-код доступны внутри выбранной
@@ -202,6 +213,16 @@
                   <div
                     class="provider-badge hidden"
                     id="editor-provider-badge"
+                    role="button"
+                    tabindex="0"
+                    title="Показать статус подключения к провайдеру"
+                    onclick="openProviderConnectionModal()"
+                    onkeydown="
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openProviderConnectionModal();
+                      }
+                    "
                   ></div>
                   <button
                     class="icon-btn"
@@ -449,6 +470,22 @@
             Подключиться
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Provider Connection Modal -->
+    <div class="modal-overlay" id="modal-provider-connection">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <button
+          class="modal-close"
+          type="button"
+          onclick="closeModal('modal-provider-connection')"
+        >
+          ✕
+        </button>
+        <div class="modal-title">Подключение к провайдеру</div>
+        <div id="provider-connection-body"></div>
       </div>
     </div>
 

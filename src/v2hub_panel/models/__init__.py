@@ -10,6 +10,8 @@ from .responses import (
     ConnectionInfo,
     ErrorResponse,
     OkResponse,
+    ProviderConnectionInfo,
+    ProviderConnectionListResponse,
     PublicSubscriptionResponse,
     SourceInfo,
     SubscriptionInfo,
@@ -23,6 +25,8 @@ __all__ = [
     # Requests
     "ListSubscriptionsRequest",
     "OkResponse",
+    "ProviderConnectionInfo",
+    "ProviderConnectionListResponse",
     "PublicSubscriptionResponse",
     "SourceInfo",
     "SourcesRequest",

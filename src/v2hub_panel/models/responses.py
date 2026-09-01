@@ -46,6 +46,26 @@ class SubscriptionListResponse(BaseModel):
     total: int = 0
 
 
+class ProviderConnectionInfo(BaseModel):
+    """A single provider connection's authorization state.
+
+    Mirrors v2hub SDK's ConnectionResponse one-to-one; kept as a separate
+    panel-owned model (rather than re-exporting the SDK type directly) so
+    the frontend-facing API shape doesn't change if the SDK's does.
+    """
+
+    provider_name: str
+    provider_url: str | None = None
+    is_authorized: bool
+    status: str | None = None
+
+
+class ProviderConnectionListResponse(BaseModel):
+    """Response model for listing the user's provider connections."""
+
+    connections: list[ProviderConnectionInfo]
+
+
 class PublicSubscriptionResponse(BaseModel):
     """Response model for public subscription endpoint."""
 

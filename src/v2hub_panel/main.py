@@ -22,7 +22,7 @@ from prometheus_client.openmetrics.exposition import (
 from .config import settings
 from .models import ErrorResponse
 from .models.responses import ErrorDetail
-from .routes import connection, public, subscriptions
+from .routes import connection, providers, public, subscriptions
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Awaitable, Callable
@@ -168,6 +168,7 @@ async def static_cache_headers(
 
 app.include_router(connection.router)
 app.include_router(subscriptions.router)
+app.include_router(providers.router)
 app.include_router(public.router)
 
 

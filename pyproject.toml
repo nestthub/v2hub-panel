@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "v2hub-panel"
-version = "1.0.3"
+version = "1.1.0"
 description = "Web management panel for V2Hub subscriptions"
 readme = "README.md"
 license = { text = "MIT" }
@@ -45,7 +45,7 @@ dependencies = [
     "pydantic-settings>=2.6,<3.0",
     "qrcode>=8.0,<9.0",
     "uvicorn>=0.32,<1.0",
-    "v2hub>=1.1.1",
+    "v2hub>=1.1.2",
 ]
 
 [project.optional-dependencies]

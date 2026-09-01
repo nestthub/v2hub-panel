@@ -40,7 +40,7 @@ repos:
           - prometheus-fastapi-instrumentator>=7.0
           - Pillow>=11.0
           - qrcode>=8.0
-          - v2hub>=1.0.8
+          - v2hub>=1.1.2
           - typing_extensions
           - types-qrcode>=8.2.0.20260518
         args: [--ignore-missing-imports]

@@ -172,3 +172,58 @@ export async function getPublicSubscription(token) {
 export function getQrCodeUrl(token) {
   return `/api/subscriptions/${encodeURIComponent(token)}/qr.png?${makeQuery()}`;
 }
+
+// ---------------------------------------------------------------------------
+// Provider connections
+// ---------------------------------------------------------------------------
+//
+// Thin proxy over the panel backend's /api/connections routes, which in
+// turn proxy the v2hub server's provider-connection endpoints 1:1. No
+// provider status/business logic (PENDING -> APPROVED/REVOKED, the
+// MAX_PROVIDERS_PER_USER limit, etc.) is implemented here or anywhere in
+// the frontend -- the backend is always asked, and its response is what
+// the UI renders.
+
+export async function listConnections() {
+  return request("/api/connections", {
+    method: "POST",
+    body: makeJsonBody(),
+  });
+}
+
+export async function getConnection(providerName) {
+  return request(`/api/connections/${encodeURIComponent(providerName)}`, {
+    method: "POST",
+    body: makeJsonBody(),
+  });
+}
+
+export async function approveConnection(providerName) {
+  return request(
+    `/api/connections/${encodeURIComponent(providerName)}/approve`,
+    {
+      method: "POST",
+      body: makeJsonBody(),
+    },
+  );
+}
+
+export async function rejectConnection(providerName) {
+  return request(
+    `/api/connections/${encodeURIComponent(providerName)}/reject`,
+    {
+      method: "POST",
+      body: makeJsonBody(),
+    },
+  );
+}
+
+export async function revokeConnection(providerName) {
+  return request(
+    `/api/connections/${encodeURIComponent(providerName)}/revoke`,
+    {
+      method: "POST",
+      body: makeJsonBody(),
+    },
+  );
+}
