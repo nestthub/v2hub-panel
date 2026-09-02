@@ -172,15 +172,15 @@ body {
     overflow: visible;
   }
 
-  /* Pending providers row — stack info above actions instead of
-     squeezing both onto one line on narrow screens. */
-  .pending-provider-row {
-    flex-direction: column;
-    align-items: stretch;
+  /* Pending provider / provider group headers on narrow screens: give
+     the name more room to shrink so the status pill and chevron never
+     get squeezed into clipping. */
+  .provider-group-name {
+    font-size: 13px;
   }
 
-  .pending-provider-actions {
-    justify-content: flex-end;
+  .provider-group-toggle-zone {
+    gap: 6px;
   }
 
   .detail-head {

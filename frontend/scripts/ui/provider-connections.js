@@ -242,32 +242,36 @@ function statusLabel(uiState) {
   }
 }
 
+/**
+ * Renders the provider as a single identity card: icon + name + status
+ * pill in a header row, followed by any remaining details (currently
+ * just the URL) as a plain key/value list underneath — one cohesive
+ * unit rather than three separately-boxed rows (issue #11 item 3).
+ */
 function buildConnectionInfoBlock(connection, uiState) {
   const wrapper = createElement("div", { class: "provider-conn-info" });
 
-  const nameRow = createElement("div", { class: "provider-conn-row" });
-  nameRow.innerHTML = `
-    <span class="provider-conn-label">Провайдер</span>
-    <span class="provider-conn-value">${escapeHtml(connection.provider_name)}</span>
+  const head = createElement("div", { class: "provider-conn-head" });
+  head.innerHTML = `
+    <div class="provider-conn-icon">🛰️</div>
+    <div class="provider-conn-head-text">
+      <div class="provider-conn-name">${escapeHtml(connection.provider_name)}</div>
+      <span class="status-pill status-pill-${uiState} status-pill-compact">${escapeHtml(statusLabel(uiState))}</span>
+    </div>
   `;
-  wrapper.appendChild(nameRow);
+  wrapper.appendChild(head);
 
   if (connection.provider_url) {
+    const details = createElement("div", { class: "provider-conn-details" });
     const urlRow = createElement("div", { class: "provider-conn-row" });
     const safeUrl = escapeHtml(connection.provider_url);
     urlRow.innerHTML = `
       <span class="provider-conn-label">Адрес</span>
       <a class="provider-conn-value provider-conn-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>
     `;
-    wrapper.appendChild(urlRow);
+    details.appendChild(urlRow);
+    wrapper.appendChild(details);
   }
-
-  const statusRow = createElement("div", { class: "provider-conn-row" });
-  statusRow.innerHTML = `
-    <span class="provider-conn-label">Статус</span>
-    <span class="status-pill status-pill-${uiState}">${escapeHtml(statusLabel(uiState))}</span>
-  `;
-  wrapper.appendChild(statusRow);
 
   return wrapper;
 }
@@ -368,6 +372,10 @@ async function refreshAfterChange(providerName) {
   // Dynamic import avoids a static import cycle: subscriptions.js
   // imports this module to open the provider modal from a group header
   // click (issue #11 item 4).
+  //
+  // Note: reloadAll() no-ops if a reload is already in flight
+  // (State.state.loadingList); that's an existing, pre-existing edge
+  // case of reloadAll() itself and not something this call introduces.
   const { reloadAll } = await import("./subscriptions.js");
   try {
     await reloadAll();
