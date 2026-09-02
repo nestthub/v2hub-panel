@@ -16,6 +16,7 @@ import { closeModal, setupModalHandlers } from "./ui/modals.js";
 import * as Subscriptions from "./ui/subscriptions.js";
 import * as Sources from "./ui/sources.js";
 import * as Providers from "./ui/providers.js";
+import * as ProviderConnections from "./ui/provider-connections.js";
 
 import * as State from "./state.js";
 
@@ -264,6 +265,11 @@ window.goBackToList = Providers.goBackToList;
 // Settings
 
 window.openSettings = openSettings;
+
+// Provider connections (issue #11)
+
+window.openProviderConnectionModal =
+  ProviderConnections.openProviderConnectionModal;
 
 // Safety net: bind the two topbar buttons (settings, connect) by id via
 // addEventListener as well as relying on their inline onclick. Belt and

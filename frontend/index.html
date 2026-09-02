@@ -202,6 +202,16 @@
                   <div
                     class="provider-badge hidden"
                     id="editor-provider-badge"
+                    role="button"
+                    tabindex="0"
+                    title="Показать статус подключения к провайдеру"
+                    onclick="openProviderConnectionModal()"
+                    onkeydown="
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openProviderConnectionModal();
+                      }
+                    "
                   ></div>
                   <button
                     class="icon-btn"
@@ -355,14 +365,13 @@
             </div>
           </section>
 
-          <!-- Recommended Providers Screen -->
+          <!-- User's Providers Screen -->
           <section class="panel screen" id="screen-providers">
             <div class="detail-head">
               <div>
-                <div class="detail-title">Рекомендованные VPN провайдеры</div>
+                <div class="detail-title">Провайдеры</div>
                 <div class="detail-subtitle">
-                  Подписки этих провайдеров будут отображаться у вас в отдельном
-                  блоке
+                  Ваши подключённые и ожидающие подтверждения провайдеры
                 </div>
               </div>
               <button
@@ -449,6 +458,22 @@
             Подключиться
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Provider Connection Modal -->
+    <div class="modal-overlay" id="modal-provider-connection">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <button
+          class="modal-close"
+          type="button"
+          onclick="closeModal('modal-provider-connection')"
+        >
+          ✕
+        </button>
+        <div class="modal-title">Подключение к провайдеру</div>
+        <div id="provider-connection-body"></div>
       </div>
     </div>
 

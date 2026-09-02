@@ -172,6 +172,14 @@ body {
     overflow: visible;
   }
 
+  .provider-group-name {
+    font-size: 13px;
+  }
+
+  .provider-group-toggle-zone {
+    gap: 6px;
+  }
+
   .detail-head {
     padding: 14px 12px;
     display: flex;
