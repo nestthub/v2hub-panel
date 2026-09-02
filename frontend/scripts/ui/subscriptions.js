@@ -16,10 +16,7 @@ import { escapeHtml, clampDepth, detectSourceType } from "../utils/helpers.js";
 import { createSourceListEditor } from "../utils/source-list-editor.js";
 import { showToast, showError } from "./toast.js";
 import { openModal, closeModal } from "./modals.js";
-import {
-  renderPendingProviders,
-  openConnectionModalFor,
-} from "./provider-connections.js";
+import { openConnectionModalFor } from "./provider-connections.js";
 
 /**
  * Update connection status display in topbar icon
@@ -247,14 +244,6 @@ export async function reloadAll() {
     updateConnectionDisplay(true);
     renderSubscriptionsList();
 
-    // Refresh the "Pending Providers" section (issue #11). Not awaited
-    // blocking-ly ahead of the rest of the function via try/catch here —
-    // it does its own error handling internally (hides itself on
-    // failure rather than throwing) so it can't break the subscriptions
-    // reload it rides along with.
-    renderPendingProviders();
-
-    // Reload current subscription if open
     if (State.state.currentSubToken) {
       const found = State.state.subscriptions.find(
         (x) => x.token === State.state.currentSubToken,
@@ -268,7 +257,6 @@ export async function reloadAll() {
     State.updateSubscriptions([]);
     updateConnectionDisplay(false);
     renderSubscriptionsList();
-    renderPendingProviders();
 
     if (e.status === 401) {
       // Токен устарел или недействителен — удаляем его полностью,

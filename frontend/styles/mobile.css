@@ -172,9 +172,6 @@ body {
     overflow: visible;
   }
 
-  /* Pending provider / provider group headers on narrow screens: give
-     the name more room to shrink so the status pill and chevron never
-     get squeezed into clipping. */
   .provider-group-name {
     font-size: 13px;
   }

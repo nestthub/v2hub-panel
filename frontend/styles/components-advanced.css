@@ -236,7 +236,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  flex: 1;
+  flex: 0 0 auto;
   padding: 6px 8px;
   border-radius: var(--radius-md);
   background: transparent;
@@ -262,6 +262,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
   padding: 6px 6px 6px 0;
 }
 
@@ -457,9 +458,6 @@
   text-decoration: underline;
 }
 
-/* Status pills — generic status indicator, reused across the connection
-   modal, the pending-providers list, provider group headers, and the
-   Providers tab. */
 .status-pill-approved {
   color: #34d399;
   background: rgba(52, 211, 153, 0.12);
@@ -476,8 +474,8 @@
   color: var(--muted);
 }
 
-/* Compact variant for use inside tight rows (group headers, pending
-   list, provider tab cards): fits its content instead of the default
+/* Compact variant for use inside tight rows (provider group headers,
+   Providers tab cards): fits its content instead of the default
    status-pill's max-width:100%/nowrap/ellipsis, which is what was
    clipping "Ожидает подтверждения" down to an ellipsis when the row
    didn't have much spare width. */
@@ -491,50 +489,6 @@
   border-radius: 999px;
 }
 
-/* ===========================
-   Pending Providers section (bottom panel, issue #11)
-   =========================== */
-
-#pending-providers-section {
-  margin-bottom: 4px;
-}
-
-#pending-providers-section.hidden {
-  display: none;
-}
-
-.pending-providers-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.pending-providers-title {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text);
-}
-
-.pending-providers-list {
-  display: grid;
-  gap: 8px;
-}
-
-/* Pending requests are rendered collapsed, in the exact same visual
-   shape as the provider-subscription-group headers above them (icon,
-   name, a compact status pill instead of a count, chevron) — clicking
-   opens the connection modal to review + approve/reject, rather than
-   exposing separate inline action buttons in the list. */
-.pending-provider-header {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--card);
-}
-
-.pending-provider-header .provider-group-toggle-zone {
-  padding-right: 8px;
-}
-
 .btn-sm {
   height: 34px;
   padding: 0 12px;
@@ -546,12 +500,6 @@
   opacity: 0.6;
   pointer-events: none;
 }
-
-/* ===========================
-   Providers tab (issue #11 item 5) — user's own connections, approved
-   first then pending, reusing .sub-card for visual consistency with the
-   subscriptions list.
-   =========================== */
 
 .provider-conn-card .sub-avatar {
   font-size: 18px;

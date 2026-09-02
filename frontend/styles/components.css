@@ -197,6 +197,7 @@ body.light-theme .btn-danger {
 .status-pill {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
   gap: 8px;
   border: 1px solid var(--line);
   background: var(--card);

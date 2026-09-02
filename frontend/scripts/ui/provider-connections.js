@@ -5,8 +5,6 @@
  *   1. Clicking the provider badge in the subscription editor
  *      (#editor-provider-badge) opens a modal for THAT subscription's
  *      provider.
- *   2. A "Pending Providers" section in the bottom panel lists every
- *      PENDING connection and lets the user approve/reject inline.
  *
  * The backend (v2hub server, reached through the panel API) is the only
  * source of truth for connection status. This module never infers or
@@ -415,89 +413,4 @@ async function refreshAfterChange(providerName) {
 
   _activeConnection = latest;
   renderModalContent(latest);
-}
-
-// ---------------------------------------------------------------------------
-// Pending Providers section (bottom panel)
-// ---------------------------------------------------------------------------
-
-function pendingListEl() {
-  return $("pending-providers-list");
-}
-
-function pendingSectionEl() {
-  return $("pending-providers-section");
-}
-
-/**
- * Fetch all connections and render the PENDING ones into the bottom
- * panel's "Provider Requests" section. Safe to call before a connection
- * is established (renders nothing rather than erroring loudly, since
- * this runs as part of general list refreshes).
- */
-export async function renderPendingProviders() {
-  const list = pendingListEl();
-  const section = pendingSectionEl();
-  if (!list || !section) return;
-
-  if (!State.state.connection.connected) {
-    section.classList.add("hidden");
-    clearChildren(list);
-    return;
-  }
-
-  let connections;
-  try {
-    const result = await API.listConnections();
-    connections = Array.isArray(result?.connections) ? result.connections : [];
-  } catch {
-    // Non-fatal: the main subscriptions list already surfaces connection
-    // errors loudly; don't pile a second error toast on top for this
-    // secondary section. Just hide it until the next successful refresh.
-    section.classList.add("hidden");
-    clearChildren(list);
-    return;
-  }
-
-  const pending = connections.filter(
-    (c) => resolveConnectionUiState(c) === "pending",
-  );
-
-  clearChildren(list);
-
-  if (!pending.length) {
-    section.classList.add("hidden");
-    return;
-  }
-
-  section.classList.remove("hidden");
-  pending.forEach((connection) => {
-    list.appendChild(buildPendingProviderRow(connection));
-  });
-}
-
-/**
- * A pending request is shown collapsed, mirroring the provider
- * subscription groups above it (same icon/name/chevron header shape) —
- * clicking the row opens the same connection modal used everywhere else
- * in the app, where the user reviews the request and approves/rejects it.
- * There's no separate inline approve/reject affordance here: one place
- * to review + act keeps the two entry points (badge, pending list) from
- * needing two different action UIs.
- */
-function buildPendingProviderRow(connection) {
-  const row = createElement("button", {
-    type: "button",
-    class: "provider-group-header pending-provider-header",
-  });
-  row.innerHTML = `
-    <span class="provider-group-icon">🛰️</span>
-    <span class="provider-group-name">${escapeHtml(connection.provider_name)}</span>
-    <span class="status-pill status-pill-pending status-pill-compact">Ожидает</span>
-    <span class="provider-group-chevron">›</span>
-  `;
-  row.addEventListener("click", () =>
-    openConnectionModalFor(connection.provider_name),
-  );
-  return row;
 }

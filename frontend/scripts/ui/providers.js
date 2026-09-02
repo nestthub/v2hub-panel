@@ -5,7 +5,6 @@
  * ones first, then pending ones — fetched live from
  * /api/connections via API.listConnections(). Clicking a row opens the
  * same provider connection modal used by the editor badge and the
- * pending-providers section, so there is exactly one place that renders
  * connection details/actions.
  */
 
