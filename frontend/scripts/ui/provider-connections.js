@@ -295,6 +295,7 @@ async function runProviderAction(
   buttons,
   action,
   successMessage,
+  actionType,
 ) {
   if (isRequestInFlight(providerName)) return;
 
@@ -308,7 +309,7 @@ async function runProviderAction(
   try {
     await action();
     showToast(successMessage);
-    await refreshAfterChange(providerName);
+    await refreshAfterChange(providerName, actionType);
   } catch (e) {
     // Failure: leave current state untouched, re-enable controls, and
     // surface the API error to the user.
@@ -329,6 +330,7 @@ async function handleApprove(providerName, buttons) {
     buttons,
     () => API.approveConnection(providerName),
     `Провайдер «${providerName}» подключён`,
+    "approve",
   );
 }
 
@@ -338,6 +340,7 @@ async function handleReject(providerName, buttons) {
     buttons,
     () => API.rejectConnection(providerName),
     `Заявка от «${providerName}» отклонена`,
+    "reject",
   );
 }
 
@@ -347,6 +350,7 @@ async function handleRevoke(providerName, button) {
     [button],
     () => API.revokeConnection(providerName),
     `Подключение к «${providerName}» отключено`,
+    "revoke",
   );
 }
 
@@ -359,13 +363,19 @@ async function handleRevoke(providerName, button) {
  * group), the editor badge, the pending-providers section, and the
  * modal itself.
  */
-async function refreshAfterChange(providerName) {
-  // Reload subscriptions from the server: whether a revoked/rejected
-  // provider's subscriptions still show up (and whether a newly
-  // approved provider's subscriptions now appear) is a server-side
-  // decision, not something to guess at client-side. This also
-  // re-renders the pending-providers section as part of the same pass
-  // (see reloadAll()), so it isn't refreshed separately here.
+async function refreshAfterChange(providerName, actionType) {
+  // Refresh the providers list from the server after every provider
+  // action. This keeps the Providers section in sync after approve,
+  // reject, or revoke without duplicating the fetch/render logic here.
+  //
+  // Dynamic import avoids a static import cycle: providers.js imports
+  // this module to open the provider connection modal.
+  const { renderProviders } = await import("./providers.js");
+  await renderProviders();
+
+  // Only approved/revoked connections can affect subscriptions.
+  // A rejected pending request has not become an active connection,
+  // so refreshing subscriptions for it would be unnecessary.
   //
   // Dynamic import avoids a static import cycle: subscriptions.js
   // imports this module to open the provider modal from a group header
@@ -374,43 +384,16 @@ async function refreshAfterChange(providerName) {
   // Note: reloadAll() no-ops if a reload is already in flight
   // (State.state.loadingList); that's an existing, pre-existing edge
   // case of reloadAll() itself and not something this call introduces.
-  const { reloadAll } = await import("./subscriptions.js");
-  try {
-    await reloadAll();
-  } catch {
-    // reloadAll() already handles its own errors (shows the
-    // disconnected empty state); nothing further to do here.
+  if (actionType === "approve" || actionType === "revoke") {
+    const { reloadAll } = await import("./subscriptions.js");
+    try {
+      await reloadAll();
+    } catch {
+      // reloadAll() already handles its own errors (shows the
+      // disconnected empty state); nothing further to do here.
+    }
   }
 
-  let latest = null;
-  try {
-    latest = await API.getConnection(providerName);
-  } catch (e) {
-    // The connection lookup itself failing after a successful action is
-    // unusual (e.g. transient network blip) — close the modal rather
-    // than show stale/incorrect info, the list above is already current.
-    closeModal("modal-provider-connection");
-    return;
-  }
-
-  const uiState = resolveConnectionUiState(latest);
-
-  // Update the editor badge if the currently-open subscription belongs
-  // to this provider.
-  const currentSub = State.getCurrentSubscription();
-  if (currentSub && currentSub.provider_name === providerName) {
-    const badge = $("editor-provider-badge");
-    if (badge) badge.textContent = latest.provider_name;
-  }
-
-  if (uiState === "unknown") {
-    // Rejected/revoked-with-no-further-action (or any status this UI
-    // doesn't render actions for) — nothing more to approve/reject here,
-    // close the modal instead of showing an empty action-less card.
-    closeModal("modal-provider-connection");
-    return;
-  }
-
-  _activeConnection = latest;
-  renderModalContent(latest);
+  closeModal("modal-provider-connection");
+  return;
 }
