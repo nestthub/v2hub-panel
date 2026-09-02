@@ -181,6 +181,9 @@ function knownErrorCode(code, errorDetail = {}) {
     case "too_many_configs":
       return `Превышен лимит конфигураций: ${d.count ?? "?"}/${d.max_count ?? "?"}. Удалите часть конфигураций или увеличьте лимит.`;
 
+    case "too_many_providers":
+      return `Достигнут лимит провайдеров: ${d.count ?? "?"}/${d.max_count ?? "?"}. Чтобы подключить нового, сначала отключите одного из текущих.`;
+
     case "rate_limit_exceeded": {
       const wait = errorDetail.retry_after ?? d.retry_after;
       return wait
@@ -334,6 +337,7 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "too_many_subscriptions" ||
     errorCode === "too_many_sources" ||
     errorCode === "too_many_configs" ||
+    errorCode === "too_many_providers" ||
     statusCode === 429
   ) {
     return {

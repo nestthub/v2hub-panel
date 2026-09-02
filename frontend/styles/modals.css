@@ -47,6 +47,18 @@
   position: relative;
 }
 
+/* Cap modal width to the same container the rest of the page (topbar,
+   panels) is centered in, instead of letting it stretch edge-to-edge
+   on wide viewports. Centered via margin auto since .modal-overlay
+   itself spans the full width (flex, align-items: flex-end) to keep
+   the bottom-sheet slide-up behavior on every screen size. */
+@media (min-width: 769px) {
+  .modal {
+    max-width: var(--container);
+    margin: 0 auto;
+  }
+}
+
 .modal-overlay.show .modal {
   transform: translateY(0);
 }
