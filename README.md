@@ -23,29 +23,23 @@ Stack:
 
 # Project Structure
 
-v2hub_panel/
-│
-├── src/
-│   └── v2hub_panel/
-│       ├── main.py              # FastAPI entrypoint (app, /, /metrics, exception handlers)
-│       ├── config.py            # Environment configuration (Settings, env_prefix=V2HUB_)
-│       │
-│       ├── routes/
-│       │   ├── connection.py    # /api/config, /api/health
-│       │   ├── public.py        # /sub/{token}, /api/subscriptions/{token}/qr.png
-│       │   └── subscriptions.py # /api/subscriptions/...
-│       │
-│       ├── models/
-│       │   ├── requests.py      # CredentialsMixin, SourceEntry, *Request schemas
-│       │   └── responses.py     # ConnectionInfo, SubscriptionInfo, *Response schemas
-│       │
-│       ├── services/
-│       │   ├── connection.py    # make_async_client, make_public_client, resolve_base_url
-│       │   └── subscription.py  # serialize_subscription, serialize_public_subscription
-│       │
-│       └── utils/
-│           ├── exceptions.py    # with_error_mapping (v2hub errors -> HTTPException)
-│           └── helpers.py       # clean_source_entries, get_public_subscription_url
+v2hub-panel/
+├── v2hub_panel/
+│   ├── main.py
+│   ├── config.py
+│   ├── routes/
+│   │   ├── connection.py
+│   │   ├── public.py
+│   │   └── subscriptions.py
+│   ├── models/
+│   │   ├── requests.py
+│   │   └── responses.py
+│   ├── services/
+│   │   ├── connection.py
+│   │   └── subscription.py
+│   └── utils/
+│       ├── exceptions.py
+│       └── helpers.py
 │
 ├── frontend/
 │   ├── index.html
@@ -57,23 +51,21 @@ v2hub_panel/
 │   └── test_*.py
 │
 ├── nginx/
-│   ├── default.conf.template    # nginx envsubst template
+│   ├── default.conf.template
 │   ├── entrypoint/
-│   │   └── grafana-config.sh    # Generates conditional Grafana routing
-│   ├── proxy_params             # proxy headers
-│   └── grafana.htpasswd         # created at deploy time, not tracked in the repo
+│   │   └── grafana-config.sh
+│   ├── proxy_params
+│   └── grafana.htpasswd
 │
 ├── monitoring/
 │   ├── alloy/
 │   │   └── config.alloy
-│   │
 │   ├── grafana/
 │   │   └── datasources.yml
-│   │
 │   ├── prometheus.yml
 │   └── loki.yml
 │
-├── certbot/                     # created at deploy time, not tracked in the repo
+├── certbot/
 │   ├── conf/
 │   └── www/
 │
@@ -83,8 +75,6 @@ v2hub_panel/
 ├── uv.lock
 ├── .env.example
 └── README.md
-````
-
 ---
 
 # Local Development
