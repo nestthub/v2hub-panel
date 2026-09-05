@@ -894,18 +894,6 @@ docker compose up -d
 
 ---
 
-# Security Notes
-
-Production:
-
-* Change Grafana credentials
-* Disable wildcard CORS
-* Use HTTPS
-* Keep monitoring services internal
-* Do not commit `.env`
-* Do not commit certificates
-* Do not commit production nginx secrets
-
 Recommended `.gitignore`:
 
 ```text
