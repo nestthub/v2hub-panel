@@ -14,7 +14,6 @@ Stack:
 - Runtime: Docker Compose
 - Reverse proxy: nginx
 - Monitoring:
-
   - Prometheus
   - Loki
   - Grafana
@@ -24,7 +23,6 @@ Stack:
 
 # Project Structure
 
-```
 v2hub_panel/
 │
 ├── src/
@@ -59,9 +57,11 @@ v2hub_panel/
 │   └── test_*.py
 │
 ├── nginx/
-│   ├── default.conf.template    # nginx envsubst template (see Nginx section for current mount caveat)
+│   ├── default.conf.template    # nginx envsubst template
+│   ├── entrypoint/
+│   │   └── grafana-config.sh    # Generates conditional Grafana routing
 │   ├── proxy_params             # proxy headers
-│   └── grafana.htpasswd         # created at deploy time, not tracked in the repo — required by the template's auth_basic directive
+│   └── grafana.htpasswd         # created at deploy time, not tracked in the repo
 │
 ├── monitoring/
 │   ├── alloy/
@@ -83,7 +83,7 @@ v2hub_panel/
 ├── uv.lock
 ├── .env.example
 └── README.md
-```
+````
 
 ---
 
@@ -93,10 +93,10 @@ v2hub_panel/
 
 Install:
 
-- Docker
-- Docker Compose plugin
-- Python 3.11+
-- uv
+* Docker
+* Docker Compose plugin
+* Python 3.11+
+* uv
 
 ---
 
@@ -116,22 +116,96 @@ V2HUB_LOG_LEVEL=DEBUG
 V2HUB_CORS_ORIGINS=["*"]
 ```
 
-> **Note**: All backend-read variables use the `V2HUB_` prefix (`config.py` sets `env_prefix="V2HUB_"`). `.env.example` currently ships `FIXED_API_URL` (no prefix) instead of `V2HUB_FIXED_API_URL` — use the prefixed name for it to actually be picked up by the app.
->
-> `DOMAIN`, `BACKEND_HOST`, `BACKEND_PORT`, `GRAFANA_HOST`, `GRAFANA_PORT` are consumed by nginx's `envsubst` templating (not the FastAPI app) and are correctly unprefixed — see [Nginx](#nginx) below.
+> **Note:** All backend-read variables use the `V2HUB_` prefix (`config.py` sets `env_prefix="V2HUB_"`).
+
+`DOMAIN`, `BACKEND_HOST`, `BACKEND_PORT`, `GRAFANA_HOST`, and `GRAFANA_PORT` are consumed by nginx rather than the FastAPI application.
+
+---
+
+# Monitoring Configuration
+
+Monitoring is controlled using Docker Compose profiles.
+
+The single source of truth is:
+
+```env
+MONITORING_PROFILE=enabled
+```
+
+`COMPOSE_PROFILES` is derived automatically:
+
+```env
+COMPOSE_PROFILES=${MONITORING_PROFILE}
+```
+
+Two values are supported:
+
+| Value      | Monitoring services | `/grafana/`   |
+| ---------- | ------------------- | ------------- |
+| `enabled`  | Started             | Available     |
+| `disabled` | Not started         | Returns `404` |
+
+Monitoring services:
+
+* Grafana Alloy
+* Loki
+* Prometheus
+* Grafana
+
+The application and nginx remain available in both modes.
+
+### Enable monitoring
+
+```env
+MONITORING_PROFILE=enabled
+COMPOSE_PROFILES=${MONITORING_PROFILE}
+```
+
+Start the stack:
+
+```bash
+docker compose up --build
+```
+
+### Disable monitoring
+
+```env
+MONITORING_PROFILE=disabled
+COMPOSE_PROFILES=${MONITORING_PROFILE}
+```
+
+Start the stack:
+
+```bash
+docker compose up --build
+```
+
+With monitoring disabled, Grafana, Prometheus, Loki, and Alloy are not started and:
+
+```text
+/grafana/
+```
+
+returns:
+
+```text
+404 Not Found
+```
 
 ---
 
 # Run Full Stack Locally
 
-The local environment runs the same stack as production:
+The local environment can run the same application stack as production.
 
-- FastAPI
-- nginx
-- Grafana
-- Prometheus
-- Loki
-- Alloy
+With monitoring enabled:
+
+* FastAPI
+* nginx
+* Grafana
+* Prometheus
+* Loki
+* Alloy
 
 Start:
 
@@ -141,21 +215,23 @@ docker compose up --build
 
 Access:
 
-Application:
+### Application
 
-```
+```text
 http://127.0.0.1
 ```
 
-Health check:
+### Health check
 
-```
+```text
 http://127.0.0.1/api/health
 ```
 
-Grafana:
+### Grafana
 
-```
+Available only when monitoring is enabled:
+
+```text
 http://127.0.0.1/grafana/
 ```
 
@@ -163,7 +239,7 @@ http://127.0.0.1/grafana/
 
 # Docker Architecture
 
-```
+```text
 Browser
    |
    |
@@ -197,45 +273,57 @@ Loki
 Grafana Explore
 ```
 
+When monitoring is disabled, the monitoring branch is not started.
+
 ---
 
 # Nginx
 
-The nginx config is written as an `envsubst` template — see the header comment in `nginx/default.conf.template`, which lists the required variables (`DOMAIN`, `BACKEND_HOST`, `BACKEND_PORT`, `GRAFANA_HOST`, `GRAFANA_PORT`).
+The nginx configuration is written as an `envsubst` template.
 
 Source:
 
-```
+```text
 nginx/default.conf.template
 ```
 
-**As currently wired in `docker-compose.yml`**, this file is mounted directly to:
+The official nginx image processes templates placed under:
 
-```
-/etc/nginx/conf.d/default.conf
-```
-
-which is a plain nginx config path — nginx does **not** run `envsubst` on it there, so the `${VAR}` placeholders are left literal unless you change the mount. The official nginx image only auto-renders templates placed under:
-
-```
+```text
 /etc/nginx/templates/*.template
 ```
 
-and writes the rendered result to `/etc/nginx/conf.d/`. If you want the templating to actually happen, mount the file to `/etc/nginx/templates/default.conf.template` instead (and drop the `.template` extension expectation for the output path) — otherwise, populate `nginx/default.conf.template` with literal values instead of `${VAR}` placeholders before building.
+Docker Compose mounts:
 
-Check generated/active config:
+```text
+nginx/default.conf.template
+```
+
+to:
+
+```text
+/etc/nginx/templates/default.conf.template
+```
+
+The nginx image renders the template into:
+
+```text
+/etc/nginx/conf.d/default.conf
+```
+
+Check the generated configuration:
 
 ```bash
 docker exec -it v2hub_nginx cat /etc/nginx/conf.d/default.conf
 ```
 
-Validate:
+Validate nginx:
 
 ```bash
 docker compose exec nginx nginx -t
 ```
 
-Reload:
+Reload nginx:
 
 ```bash
 docker compose exec nginx nginx -s reload
@@ -243,29 +331,63 @@ docker compose exec nginx nginx -s reload
 
 ---
 
+## Grafana Routing
+
+Grafana routing is generated dynamically by:
+
+```text
+nginx/entrypoint/grafana-config.sh
+```
+
+The script runs when the nginx container starts.
+
+When:
+
+```env
+MONITORING_PROFILE=enabled
+```
+
+the script generates a Grafana proxy:
+
+```nginx
+location /grafana/ {
+    ...
+    proxy_pass http://grafana:3000;
+    ...
+}
+```
+
+When:
+
+```env
+MONITORING_PROFILE=disabled
+```
+
+the script generates:
+
+```nginx
+location /grafana/ {
+    return 404;
+}
+```
+
+This keeps Grafana routing consistent with the selected monitoring profile.
+
+---
+
 # HTTPS / Production Notes
 
-Local environment does NOT require SSL certificates.
+Local development does NOT require SSL certificates.
 
-Do not enable:
+Production requires certificates under:
 
-```
-/etc/letsencrypt/live/<domain>/fullchain.pem
-```
-
-until certificates exist.
-
-Production requires:
-
-```
+```text
 certbot/conf/
 ```
 
-with generated certificates.
-
 Expected structure:
 
-```
+```text
 certbot/conf/
 └── live/
     └── panel.example.com/
@@ -273,9 +395,9 @@ certbot/conf/
         └── privkey.pem
 ```
 
-Without these files nginx will fail:
+Without the required certificate files nginx may fail with:
 
-```
+```text
 cannot load certificate
 BIO_new_file() failed
 ```
@@ -306,7 +428,26 @@ Production example:
 V2HUB_LOG_LEVEL=INFO
 V2HUB_FIXED_API_URL=https://example.com
 V2HUB_CORS_ORIGINS=https://panel.example.com
+
+MONITORING_PROFILE=enabled
+COMPOSE_PROFILES=${MONITORING_PROFILE}
 ```
+
+Set:
+
+```env
+MONITORING_PROFILE=enabled
+```
+
+if the monitoring stack should run.
+
+Set:
+
+```env
+MONITORING_PROFILE=disabled
+```
+
+if monitoring should not run.
 
 ---
 
@@ -349,31 +490,33 @@ Check:
 docker compose ps
 ```
 
+The selected monitoring profile determines whether the monitoring services are started.
+
 ---
 
 # Backend
 
 Application entrypoint:
 
-```
+```text
 v2hub_panel.main:app
 ```
 
 Container command:
 
-```
+```text
 uvicorn v2hub_panel.main:app
 ```
 
 Internal port:
 
-```
+```text
 8000
 ```
 
 Health endpoint:
 
-```
+```text
 GET /api/health
 ```
 
@@ -393,68 +536,87 @@ All endpoints proxy to a v2hub-api server. `base_url` and `api_token` are suppli
 
 ## Public
 
-```
+```text
 GET /
 ```
 
 Frontend SPA
 
-```
+```text
 GET /sub/{token}?base_url=<url>
 ```
 
-Resolves a subscription's public content via the upstream server (no `api_token` required)
+Resolves a subscription's public content via the upstream server.
 
-```
+```text
 GET /api/subscriptions/{token}/qr.png?base_url=<url>
 ```
 
-QR code (PNG) for a subscription's public URL
+QR code (PNG) for a subscription's public URL.
 
-```
+```text
 GET /api/config
 ```
 
-Server-side frontend config (currently just `fixed_api_url`)
+Server-side frontend configuration.
 
-```
+```text
 GET /api/health
 ```
 
-Health check
+Health check.
 
-```
+```text
 GET /metrics
 ```
 
-Prometheus metrics (scraped internally — see [Monitoring](#monitoring))
+Prometheus metrics.
+
+---
 
 ## Subscription API
 
-All of these require `base_url` and `api_token` in the JSON request body (via `CredentialsMixin`), since the panel itself holds no credentials.
+All of these require `base_url` and `api_token` in the JSON request body via `CredentialsMixin`, since the panel itself holds no credentials.
 
-```
-POST   /api/subscriptions                          # list
-POST   /api/subscriptions/new                       # create
-POST   /api/subscriptions/{token}                   # get
-PATCH  /api/subscriptions/{token}                   # update
-DELETE /api/subscriptions/{token}                    # delete
-POST   /api/subscriptions/{token}/sources/add        # add sources
-POST   /api/subscriptions/{token}/sources/replace    # replace all sources
+```text
+POST   /api/subscriptions
+POST   /api/subscriptions/new
+POST   /api/subscriptions/{token}
+PATCH  /api/subscriptions/{token}
+DELETE /api/subscriptions/{token}
+POST   /api/subscriptions/{token}/sources/add
+POST   /api/subscriptions/{token}/sources/replace
 ```
 
-> Note: `list`/`get`/`delete` use `POST`/`DELETE` with a JSON body (not query params) purely to carry `base_url`/`api_token` — `list` and `get` are read-only despite the `POST` verb.
+> Note: `list`/`get`/`delete` use `POST`/`DELETE` with a JSON body to carry `base_url`/`api_token`.
 
 ---
 
 # Monitoring
 
+The monitoring stack consists of:
+
+* Prometheus
+* Loki
+* Grafana Alloy
+* Grafana
+
+The complete monitoring stack is optional and controlled by `MONITORING_PROFILE`.
+
+---
+
 ## Prometheus
 
 Scrapes:
 
-```
+```text
 app:8000/metrics
+```
+
+Prometheus is started only when:
+
+```env
+MONITORING_PROFILE=enabled
 ```
 
 ---
@@ -465,13 +627,16 @@ Stores logs from Docker containers.
 
 Pipeline:
 
-```
+```text
 Docker
- |
+  |
+  v
 Alloy
- |
+  |
+  v
 Loki
- |
+  |
+  v
 Grafana
 ```
 
@@ -483,7 +648,7 @@ Collects Docker logs.
 
 Config:
 
-```
+```text
 monitoring/alloy/config.alloy
 ```
 
@@ -491,17 +656,23 @@ monitoring/alloy/config.alloy
 
 ## Grafana
 
-Available through nginx:
+Available through nginx when monitoring is enabled:
 
-```
+```text
 /grafana/
 ```
 
-Credentials:
+When monitoring is disabled:
 
-Configured in:
-
+```text
+/grafana/
 ```
+
+returns `404`.
+
+Credentials are configured in:
+
+```text
 docker-compose.yml
 ```
 
@@ -512,7 +683,7 @@ GF_SECURITY_ADMIN_USER=admin
 GF_SECURITY_ADMIN_PASSWORD=admin
 ```
 
-Change before production.
+Change the default credentials before production.
 
 ---
 
@@ -548,9 +719,47 @@ npm test
 
 ---
 
+## Monitoring Configuration Validation
+
+The CI pipeline validates both monitoring states.
+
+### Disabled
+
+```text
+MONITORING_PROFILE=disabled
+```
+
+The following services must not be included:
+
+```text
+alloy
+loki
+prometheus
+grafana
+```
+
+### Enabled
+
+```text
+MONITORING_PROFILE=enabled
+```
+
+The following services must be included:
+
+```text
+alloy
+loki
+prometheus
+grafana
+```
+
+The CI pipeline also validates that nginx generates the correct Grafana routing for both states.
+
+---
+
 # Useful Docker Commands
 
-Logs:
+View logs:
 
 ```bash
 docker compose logs -f app
@@ -560,7 +769,25 @@ docker compose logs -f loki
 docker compose logs -f alloy
 ```
 
-Restart:
+View active services:
+
+```bash
+docker compose config --services
+```
+
+View services with monitoring enabled:
+
+```bash
+docker compose --profile enabled config --services
+```
+
+View services with monitoring disabled:
+
+```bash
+docker compose --profile disabled config --services
+```
+
+Restart nginx:
 
 ```bash
 docker compose restart nginx
@@ -598,15 +825,13 @@ docker compose logs nginx
 
 Common cause:
 
-Missing certificates:
-
-```
+```text
 cannot load certificate
 ```
 
-Fix:
+This usually means the required SSL certificates are missing.
 
-Disable SSL config locally or generate certs.
+Fix by generating the certificates or using the appropriate local nginx configuration.
 
 ---
 
@@ -622,7 +847,7 @@ Test:
 
 ```bash
 docker exec -it v2hub_app \
-curl http://localhost:8000/api/health
+  curl http://localhost:8000/api/health
 ```
 
 ---
@@ -633,7 +858,38 @@ Test:
 
 ```bash
 docker exec -it v2hub_nginx \
-wget -qO- http://app:8000/api/health
+  wget -qO- http://app:8000/api/health
+```
+
+---
+
+## Grafana is unavailable
+
+First check the monitoring profile:
+
+```bash
+docker compose config --services
+```
+
+If monitoring is disabled, Grafana is intentionally not started and:
+
+```text
+/grafana/
+```
+
+returns `404`.
+
+Enable monitoring:
+
+```env
+MONITORING_PROFILE=enabled
+COMPOSE_PROFILES=${MONITORING_PROFILE}
+```
+
+Then restart the stack:
+
+```bash
+docker compose up -d
 ```
 
 ---
@@ -642,17 +898,17 @@ wget -qO- http://app:8000/api/health
 
 Production:
 
-- Change Grafana credentials
-- Disable wildcard CORS
-- Use HTTPS
-- Keep monitoring services internal
-- Do not commit `.env`
-- Do not commit certificates
-- Do not commit production nginx secrets
+* Change Grafana credentials
+* Disable wildcard CORS
+* Use HTTPS
+* Keep monitoring services internal
+* Do not commit `.env`
+* Do not commit certificates
+* Do not commit production nginx secrets
 
 Recommended `.gitignore`:
 
-```
+```text
 .env
 certbot/conf/
 certbot/www/
@@ -668,6 +924,8 @@ __pycache__/
 Before production:
 
 - [ ] `.env` configured
+- [ ] `MONITORING_PROFILE` configured
+- [ ] `COMPOSE_PROFILES` derived from `MONITORING_PROFILE`
 - [ ] Domain DNS configured
 - [ ] SSL certificates generated
 - [ ] Grafana password changed
@@ -675,4 +933,5 @@ Before production:
 - [ ] Docker containers healthy
 - [ ] nginx config validated
 - [ ] `/api/health` returns 200
-- [ ] Monitoring stack running
+- [ ] Monitoring stack running when `MONITORING_PROFILE=enabled`
+- [ ] `/grafana/` returns `404` when `MONITORING_PROFILE=disabled`

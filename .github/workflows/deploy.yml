@@ -64,6 +64,9 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
+            echo "Validating monitoring configuration..."
+            docker compose config --services
+
             echo "Pulling prebuilt images if available..."
             docker compose pull || true
 
