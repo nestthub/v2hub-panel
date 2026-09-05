@@ -21,8 +21,9 @@ Stack:
 
 ---
 
-# Project Structure
+## Project Structure
 
+```text
 v2hub-panel/
 ├── v2hub_panel/
 │   ├── main.py
