@@ -71,6 +71,10 @@ jobs:
             docker compose pull || true
 
             echo "Recreating containers..."
+            if [ "${MONITORING_PROFILE:-disabled}" = "disabled" ]; then
+              docker compose rm -sf grafana prometheus loki alloy || true
+            fi
+
             docker compose up -d --build
 
             echo "Restarting nginx to refresh upstream DNS resolution..."

@@ -39,6 +39,7 @@ logs/
 # Docker
 *.pid
 node_modules
+docker-compose.test.yml
 
 # Production secrets
 nginx/nginx.conf
