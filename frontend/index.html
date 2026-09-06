@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
     />
     <title>v2hub</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
 
     <!-- Telegram Mini Apps SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -23,6 +24,29 @@
   </head>
 
   <body>
+    <!--
+      Theme init: runs synchronously, as the very first thing in <body>,
+      before any of the markup below is parsed/painted and long before
+      main.js (a deferred module) ever runs. Dark is the default and is
+      already baked into :root in variables.css, so on first-ever visit
+      (no saved preference) nothing needs to change here — the page is
+      already dark. This only switches to light-theme when the user has
+      explicitly saved that preference, and it does so before paint,
+      eliminating the light-then-dark flash on reload.
+    -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("v2hub_theme");
+          document.body.classList.add(
+            saved === "light" ? "light-theme" : "dark-theme",
+          );
+        } catch (e) {
+          document.body.classList.add("dark-theme");
+        }
+      })();
+    </script>
+
     <div class="app-shell">
       <div class="app">
         <header class="topbar">
@@ -417,7 +441,7 @@
         >
           ✕
         </button>
-        <div class="modal-title">Подключение к V2Hub API</div>
+        <div class="modal-title">Подключение к v2hub API</div>
         <div class="input-group" id="url-input-group">
           <label class="input-label">
             Base URL

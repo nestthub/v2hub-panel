@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "v2hub-panel"
 version = "1.1.0"
-description = "Web management panel for V2Hub subscriptions"
+description = "Web management panel for v2hub subscriptions"
 readme = "README.md"
 license = { text = "MIT" }
 

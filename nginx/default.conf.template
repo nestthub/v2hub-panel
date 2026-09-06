@@ -161,6 +161,40 @@ server {
 
 
     # ─────────────────────────────────────────────────────────────────────────
+    # Static frontend assets (CSS/JS)
+    #
+    # These are requested in a burst on every single page load (index.html
+    # pulls in ~7 stylesheets + the JS entrypoint at once), so they must NOT
+    # share the same rate-limit zone/burst budget as the API and page routes.
+    # A reload two reloads in a row was exhausting the shared `api` zone's
+    # burst=20 and getting 429'd for the following 4-5s. Assets are served
+    # with a cache-busting ?v=<hash> query param (see ASSET_VERSION in
+    # main.py), so they're safe to cache aggressively and effectively don't
+    # need request-rate limiting at all.
+    # ─────────────────────────────────────────────────────────────────────────
+
+    location /static/ {
+
+        proxy_pass http://v2hub_backend;
+
+        include /etc/nginx/proxy_params;
+
+        # Cache-Control is already set by the FastAPI app's
+        # static_cache_headers middleware (public, max-age=31536000,
+        # immutable) since assets are cache-busted via ?v=<hash>;
+        # no need to duplicate it here.
+    }
+
+    location /assets/ {
+
+        proxy_pass http://v2hub_backend;
+
+        include /etc/nginx/proxy_params;
+    }
+
+
+
+    # ─────────────────────────────────────────────────────────────────────────
     # Frontend SPA + FastAPI fallback
     # ─────────────────────────────────────────────────────────────────────────
 

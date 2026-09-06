@@ -67,7 +67,13 @@ function setTheme(theme) {
 }
 
 /**
- * Load Saved Theme
+ * Sync theme state
+ *
+ * The actual dark/light class is already applied synchronously by the
+ * inline script at the top of <body>, before this module ever runs
+ * (main.js is a deferred ES module), so the page never flashes light.
+ * This just re-applies the resolved theme so `currentTheme` and the
+ * CSS classes stay in sync with localStorage / the settings toggle.
  */
 export function loadSavedTheme() {
   const saved = localStorage.getItem("v2hub_theme") || "dark";

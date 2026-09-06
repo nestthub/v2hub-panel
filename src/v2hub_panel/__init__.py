@@ -1,4 +1,4 @@
-"""V2Hub Mini App - Professional VPN subscription management application."""
+"""v2hub Mini App - Professional VPN subscription management application."""
 
 from importlib.metadata import PackageNotFoundError, version
 

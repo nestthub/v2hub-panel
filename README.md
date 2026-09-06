@@ -1,10 +1,10 @@
-# V2Hub Panel
+# v2hub Panel
 
-Web application for managing V2Hub subscriptions and sources.
+Web application for managing v2hub subscriptions and sources.
 
-### 🌐 Part of the [V2Hub Ecosystem](https://github.com/nestthub/nestthub/blob/main/ecosystems/v2hub/README.md)
+### 🌐 Part of the [v2hub Ecosystem](https://github.com/nestthub/nestthub/blob/main/ecosystems/v2hub/README.md)
 
-This package is one component of V2Hub — see the full project overview, architecture, and all related repositories.
+This package is one component of v2hub — see the full project overview, architecture, and all related repositories.
 
 Stack:
 

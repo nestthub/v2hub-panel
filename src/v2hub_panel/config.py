@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     )
 
     # Application
-    app_title: str = "V2Hub Mini App"
+    app_title: str = "v2hub Mini App"
     app_version: str = "1.0.0"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=V2Hub Panel
+Description=v2hub Panel
 Documentation=https://github.com/nestthub/v2hub-panel
 After=network.target
 Wants=network.target

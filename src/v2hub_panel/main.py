@@ -140,6 +140,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.mount("/assets", StaticFiles(directory="frontend/assets"), name="assets")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

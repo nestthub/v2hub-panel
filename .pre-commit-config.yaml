@@ -71,7 +71,7 @@ repos:
             tar -xzf "$BIN_DIR/gitleaks.tar.gz" -C "$BIN_DIR" gitleaks;
             chmod +x "$BIN";
           fi;
-          "$BIN" detect --source=. --no-git -v'
+          "$BIN" protect --staged -v'
 
   # Dockerfile lint — пинованный бинарник, скачивается с GitHub Releases,
   # тот же надёжный паттерн, что и для gitleaks.
