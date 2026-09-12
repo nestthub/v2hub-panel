@@ -46,6 +46,7 @@ dependencies = [
     "qrcode>=8.0,<9.0",
     "uvicorn>=0.32,<1.0",
     "v2hub>=1.1.2",
+    "v2hub-admin>=1.1.2",
 ]
 
 [project.optional-dependencies]
@@ -60,7 +61,6 @@ dev = [
     "types-qrcode>=8.2.0.20260518",
 ]
 
-# Если есть CLI
 [project.scripts]
 v2hub-panel = "v2hub_panel.main:cli"
 

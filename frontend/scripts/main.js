@@ -6,7 +6,8 @@
  * 2. Apply config to state
  * 3. Load saved theme
  * 4. Setup modal handlers
- * 5. Auto connect if credentials exist
+ * 5. Auto-fill token via Telegram Mini App initData, if applicable
+ * 6. Auto connect if credentials exist
  */
 
 import { $, onReady } from "./utils/dom.js";
@@ -20,7 +21,7 @@ import * as ProviderConnections from "./ui/provider-connections.js";
 
 import * as State from "./state.js";
 
-import { fetchServerConfig } from "./api.js";
+import { fetchServerConfig, fetchTelegramAutoFill } from "./api.js";
 
 import { loadSavedTheme, openSettings } from "./ui/settings.js";
 
@@ -54,6 +55,35 @@ async function init() {
     State.applyServerConfig(cfg);
 
     const fixedUrl = State.serverConfig.fixed_api_url;
+
+    // Auto-fill the API token via Telegram Mini App initData only when:
+    //   1. a fixed API URL is configured;
+    //   2. Telegram auto-fill is enabled on the backend;
+    //   3. the page is genuinely running inside a Telegram Mini App;
+    //   4. the user does not already have a saved API token.
+    //
+    // If any condition is not met, no auto-fill request is made and the
+    // existing manual connection flow is used instead.
+    const existingToken = State.loadConnectionLocal().api_token;
+    const initData = window.Telegram?.WebApp?.initData;
+
+    if (
+      fixedUrl &&
+      State.serverConfig.telegram_autofill_enabled &&
+      initData &&
+      !existingToken
+    ) {
+      const result = await fetchTelegramAutoFill(initData);
+
+      if (result?.api_token) {
+        // Store the token exactly like a manually entered token.
+        // The panel backend does not persist the token.
+        State.saveConnectionLocal(
+          result.base_url || fixedUrl,
+          result.api_token,
+        );
+      }
+    }
 
     const local = State.loadConnectionLocal();
 

@@ -44,6 +44,58 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------
     fixed_api_url: str | None = "https://v2hub.link"
 
+    # -----------------------------------------------------------------------
+    # Telegram Mini App auto-fill (optional)
+    #
+    # When BOTH of these are set, the panel can auto-fill a user's API token
+    # on first load, without the user ever pasting it in: it validates the
+    # Telegram WebApp initData the frontend sends (proving the request truly
+    # comes from that Telegram user, via bot_token), then asks the v2hub
+    # server for that user's token via v2hub-admin (via admin_secret_key),
+    # creating the account if it doesn't exist yet.
+    #
+    # Leaving either one unset disables the feature entirely and restores
+    # the exact previous behavior: the frontend never calls the new
+    # /api/auth/telegram endpoint, and the endpoint itself returns 503 if it
+    # is called anyway. No admin access is granted, no initData is ever
+    # looked at, and nothing changes for anyone not running inside Telegram.
+    #
+    # The feature also silently disables itself -- with no exception ever
+    # raised -- if the optional v2hub-admin package isn't installed (see
+    # pyproject.toml's "telegram-autofill" extra and its use in "dev").
+    # telegram_autofill_enabled below is the single source of truth for
+    # all of this; every caller (this config, routes/auth.py, and the
+    # frontend via GET /api/config) only ever checks that one property.
+    # -----------------------------------------------------------------------
+    telegram_bot_token: str | None = None
+    admin_secret_key: str | None = None
+
+    @property
+    def telegram_autofill_enabled(self) -> bool:
+        """
+        Whether Telegram auto-fill is fully configured AND usable.
+
+        Requires fixed_api_url too, not just the two Telegram-specific
+        settings: auto-fill creates/fetches an account via v2hub-admin
+        against one specific v2hub server, so there has to be exactly one
+        known, trusted server to do that against. In "bring your own
+        server" mode (fixed_api_url unset), there's no single server this
+        could apply to, so the feature stays off regardless of the other
+        two settings.
+
+        Also requires the optional v2hub-admin package to actually be
+        installed. This is checked via importlib.util.find_spec rather
+        than a real import, specifically so that a missing package can
+        never raise ImportError here -- it just makes this property
+        (and therefore the whole feature) report itself as disabled.
+        """
+        if not (self.telegram_bot_token and self.admin_secret_key and self.fixed_api_url):
+            return False
+
+        import importlib.util
+
+        return importlib.util.find_spec("v2hub_admin") is not None
+
     @property
     def frontend_index(self) -> Path:
         """Path to frontend index.html."""

@@ -106,3 +106,16 @@ class SubscriptionUpdateRequest(CredentialsMixin):
 
 class SourcesRequest(CredentialsMixin):
     sources: list[SourceEntry] = Field(default_factory=list)
+
+
+class TelegramAuthRequest(BaseModel):
+    """Body for the Telegram Mini App auto-fill endpoint.
+
+    Deliberately NOT a CredentialsMixin — there is no api_token here at
+    all; the whole point of this endpoint is to hand one back. init_data
+    is the raw, unparsed `window.Telegram.WebApp.initData` string, taken
+    as-is; it is validated server-side (see utils/telegram.py) rather
+    than trusted based on shape alone.
+    """
+
+    init_data: str = Field(..., min_length=1)
