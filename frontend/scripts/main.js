@@ -56,26 +56,19 @@ async function init() {
 
     const fixedUrl = State.serverConfig.fixed_api_url;
 
-    // Auto-fill the API token via Telegram Mini App initData, if every
-    // one of these holds:
-    //   1. the panel backend has auto-fill configured at all
-    //      (bot token + admin secret + a fixed server to create/fetch
-    //      the account on — see Settings.telegram_autofill_enabled)
-    //   2. the page is genuinely running as a Telegram Mini App launch
-    //      (non-empty window.Telegram.WebApp.initData) — not just a
-    //      regular browser tab
-    //   3. that initData is real and fresh, not forged/replayed — this
-    //      is verified server-side in routes/auth.py, not here; the
-    //      frontend only decides *whether* to ask, the backend decides
-    //      whether the answer is trustworthy
-    //   4. the user hasn't already got a token saved locally
+    // Auto-fill the API token via Telegram Mini App initData only when:
+    //   1. a fixed API URL is configured;
+    //   2. Telegram auto-fill is enabled on the backend;
+    //   3. the page is genuinely running inside a Telegram Mini App;
+    //   4. the user does not already have a saved API token.
     //
-    // If any of these don't hold, we skip this entirely: no request is
-    // made, initData is never even read out of window.Telegram.
+    // If any condition is not met, no auto-fill request is made and the
+    // existing manual connection flow is used instead.
     const existingToken = State.loadConnectionLocal().api_token;
     const initData = window.Telegram?.WebApp?.initData;
 
     if (
+      fixedUrl &&
       State.serverConfig.telegram_autofill_enabled &&
       initData &&
       !existingToken
@@ -83,11 +76,10 @@ async function init() {
       const result = await fetchTelegramAutoFill(initData);
 
       if (result?.api_token) {
-        // Mirrors a normal manual connect — nothing about the token is
-        // kept on the panel backend, it's handed back once and stored
-        // exactly like any other saved connection.
+        // Store the token exactly like a manually entered token.
+        // The panel backend does not persist the token.
         State.saveConnectionLocal(
-          result.base_url || fixedUrl || null,
+          result.base_url || fixedUrl,
           result.api_token,
         );
       }
