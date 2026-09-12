@@ -1528,6 +1528,7 @@ dependencies = [
     { name = "qrcode" },
     { name = "uvicorn" },
     { name = "v2hub" },
+    { name = "v2hub-admin" },
 ]
 
 [package.optional-dependencies]
@@ -1540,10 +1541,6 @@ dev = [
     { name = "pytest-mock" },
     { name = "ruff" },
     { name = "types-qrcode" },
-    { name = "v2hub-admin" },
-]
-telegram-autofill = [
-    { name = "v2hub-admin" },
 ]
 
 [package.metadata]
@@ -1564,10 +1561,9 @@ requires-dist = [
     { name = "types-qrcode", marker = "extra == 'dev'", specifier = ">=8.2.0.20260518" },
     { name = "uvicorn", specifier = ">=0.32,<1.0" },
     { name = "v2hub", specifier = ">=1.1.2" },
-    { name = "v2hub-admin", marker = "extra == 'dev'", specifier = ">=1.1.2" },
-    { name = "v2hub-admin", marker = "extra == 'telegram-autofill'", specifier = ">=1.1.2" },
+    { name = "v2hub-admin", specifier = ">=1.1.2" },
 ]
-provides-extras = ["dev", "telegram-autofill"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "virtualenv"
