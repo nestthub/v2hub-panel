@@ -1502,6 +1502,20 @@ wheels = [
 ]
 
 [[package]]
+name = "v2hub-admin"
+version = "1.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "v2hub" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/81/59/9f33f7afe3d000838ef90f9b243aa5e1bc45b440ee643f8b8a1c82272b0b/v2hub_admin-1.1.4.tar.gz", hash = "sha256:25594cd72d16b121aaa2f7aab80a2823b3039efe5dbe2d2cda5eb2c28228596a", size = 29012, upload-time = "2026-08-28T15:16:04.523Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/06/4e68935c4b50df2b265c57172db92956b07f933a046bb8a332f281e6a93e/v2hub_admin-1.1.4-py3-none-any.whl", hash = "sha256:a5013874e22483b3bc13f9e2f34d8bb4cb822b56c39ae15ad4594a63d6b65879", size = 21666, upload-time = "2026-08-28T15:16:03.361Z" },
+]
+
+[[package]]
 name = "v2hub-panel"
 version = "1.1.0"
 source = { editable = "." }
@@ -1526,6 +1540,10 @@ dev = [
     { name = "pytest-mock" },
     { name = "ruff" },
     { name = "types-qrcode" },
+    { name = "v2hub-admin" },
+]
+telegram-autofill = [
+    { name = "v2hub-admin" },
 ]
 
 [package.metadata]
@@ -1546,8 +1564,10 @@ requires-dist = [
     { name = "types-qrcode", marker = "extra == 'dev'", specifier = ">=8.2.0.20260518" },
     { name = "uvicorn", specifier = ">=0.32,<1.0" },
     { name = "v2hub", specifier = ">=1.1.2" },
+    { name = "v2hub-admin", marker = "extra == 'dev'", specifier = ">=1.1.2" },
+    { name = "v2hub-admin", marker = "extra == 'telegram-autofill'", specifier = ">=1.1.2" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "telegram-autofill"]
 
 [[package]]
 name = "virtualenv"

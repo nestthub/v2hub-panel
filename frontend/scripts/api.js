@@ -102,6 +102,28 @@ export async function fetchServerConfig() {
   }
 }
 
+/**
+ * Ask the panel backend to resolve a Telegram Mini App launch's initData
+ * into a v2hub API token (see routes/auth.py::telegram_auto_fill).
+ *
+ * Deliberately bypasses makeJsonBody() -- there are no credentials to
+ * send yet, that's the whole point of this call. Returns null on any
+ * failure (feature disabled, invalid initData, network error) rather
+ * than throwing, since a failed auto-fill attempt should silently fall
+ * back to the normal manual-entry flow instead of surfacing an error to
+ * a user who never asked for this.
+ */
+export async function fetchTelegramAutoFill(initData) {
+  try {
+    return await request("/api/auth/telegram", {
+      method: "POST",
+      body: JSON.stringify({ init_data: initData }),
+    });
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Subscriptions
 // ---------------------------------------------------------------------------

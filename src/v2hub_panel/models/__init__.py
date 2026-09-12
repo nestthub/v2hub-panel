@@ -5,6 +5,7 @@ from .requests import (
     SourcesRequest,
     SubscriptionCreateRequest,
     SubscriptionUpdateRequest,
+    TelegramAuthRequest,
 )
 from .responses import (
     ConnectionInfo,
@@ -16,6 +17,7 @@ from .responses import (
     SourceInfo,
     SubscriptionInfo,
     SubscriptionListResponse,
+    TelegramAuthResponse,
 )
 
 __all__ = [
@@ -34,4 +36,6 @@ __all__ = [
     "SubscriptionInfo",
     "SubscriptionListResponse",
     "SubscriptionUpdateRequest",
+    "TelegramAuthRequest",
+    "TelegramAuthResponse",
 ]

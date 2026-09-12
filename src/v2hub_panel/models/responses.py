@@ -105,3 +105,15 @@ class ErrorResponse(BaseModel):
     """HTTP error envelope — FastAPI serialises HTTPException.detail into this."""
 
     detail: ErrorDetail
+
+
+class TelegramAuthResponse(BaseModel):
+    """Response for a successful Telegram Mini App auto-fill.
+
+    api_token is handed back once, for the frontend to save locally
+    exactly like a manually-entered token -- the panel backend itself
+    does not persist it anywhere.
+    """
+
+    api_token: str
+    base_url: str | None = None

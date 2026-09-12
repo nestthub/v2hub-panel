@@ -58,6 +58,19 @@ dev = [
     "pytest-mock>=3.11.0",
     "ruff>=0.1.0",
     "types-qrcode>=8.2.0.20260518",
+    # Needed for tests only: tests/test_services_telegram_auth.py and
+    # tests/test_routes_auth.py exercise the Telegram Mini App auto-fill
+    # code path, which lazily imports v2hub-admin. Not required to run
+    # the panel itself -- see the telegram-autofill extra below for that.
+    "v2hub-admin>=1.1.2",
+]
+
+# Needed only if you configure Telegram Mini App token auto-fill
+# (V2HUB_TELEGRAM_BOT_TOKEN + V2HUB_ADMIN_SECRET_KEY) — see
+# services/telegram_auth.py. Not required to run the panel otherwise;
+# see "dev" above for the same dependency needed just to run the tests.
+telegram-autofill = [
+    "v2hub-admin>=1.1.2",
 ]
 
 # Если есть CLI
