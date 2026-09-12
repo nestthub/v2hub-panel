@@ -10,7 +10,7 @@ into a token.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from v2hub import NotFoundError
 
@@ -85,4 +85,6 @@ async def get_or_create_api_token(user_id: int) -> str:
         except NotFoundError:
             user = await admin.create_user(user_id)
 
-        return cast("str", user.api_token)
+        api_token: str = user.api_token
+
+        return api_token
