@@ -49,6 +49,19 @@
   color: #fff;
 }
 
+.tab-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #3d7fd6, #2494ad);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(55, 192, 242, 0.08);
+}
+
+.tab-primary:hover {
+  background: linear-gradient(135deg, #3d7fd6, #2494ad);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
 /* Lists */
 .list {
   display: grid;

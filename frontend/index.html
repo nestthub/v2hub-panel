@@ -283,12 +283,12 @@
                   Предпросмотр
                 </button>
                 <button
-                  class="tab"
+                  class="tab tab-primary"
                   type="button"
                   data-tab="export"
                   onclick="switchTab('export')"
                 >
-                  Экспорт
+                  Подключение
                 </button>
               </div>
               <div class="content tab-content" id="tab-sources">
@@ -560,7 +560,7 @@
           <div class="input-hint">Имя, которое видите только вы</div>
         </div>
         <div class="input-group">
-          <label class="input-label">Описание (видно в приложениях)</label>
+          <label class="input-label">Описание (необязательно)</label>
           <input
             class="input-field"
             id="create-desc"
@@ -569,10 +569,13 @@
             maxlength="255"
             autocomplete="off"
           />
+          <div class="input-hint">
+            Название подписки, которое будет отображаться в конечном приложении.
+          </div>
         </div>
 
         <div class="input-group">
-          <label class="input-label">Начальные источники</label>
+          <label class="input-label">Начальные источники (необязательно)</label>
           <div class="source-row-list" id="create-source-rows"></div>
           <button
             class="add-row-btn"
