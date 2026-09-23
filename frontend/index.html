@@ -126,7 +126,6 @@
 
             <div class="brand-copy">
               <div class="brand-title">v2hub</div>
-              <div class="brand-subtitle">professional mini app</div>
             </div>
           </div>
           <div class="topbar-actions">
@@ -159,7 +158,7 @@
               <div>
                 <div class="detail-title">Подписки</div>
                 <div class="detail-subtitle">
-                  Управление источниками, предпросмотром и экспортом
+                  Управление источниками и подключениями
                 </div>
               </div>
             </div>
@@ -330,9 +329,9 @@
               >
                 <div class="export-grid">
                   <div class="export-block">
-                    <div class="export-label">Публичная ссылка</div>
+                    <div class="export-label">Ссылка на подключение</div>
                     <div class="export-desc">
-                      Используйте её для подключения к подписке
+                      Скопируйте ссылку и вставьте в v2ray/v2bot/etc.
                     </div>
                     <div class="export-box">
                       <div class="export-value" id="export-url">—</div>
@@ -347,9 +346,6 @@
                   </div>
                   <div class="export-block">
                     <div class="export-label">Base64</div>
-                    <div class="export-desc">
-                      Строка для клиентов, поддерживающих импорт подписок
-                    </div>
                     <div class="export-box">
                       <div class="export-value" id="export-b64">—</div>
                       <button
@@ -370,18 +366,18 @@
                       Копировать ссылку
                     </button>
                     <button
-                      class="btn btn-secondary"
+                      class="btn btn-primary"
                       type="button"
                       onclick="openQrModal()"
                     >
                       QR подписки
                     </button>
                     <button
-                      class="btn btn-primary"
+                      class="btn btn-secondary"
                       type="button"
                       onclick="downloadBundle()"
                     >
-                      Скачать
+                      Сохранить в файл
                     </button>
                   </div>
                 </div>
