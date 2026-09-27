@@ -33,6 +33,23 @@ class Settings(BaseSettings):
     # Paths
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
     frontend_dir: Path = base_dir / "frontend"
+    data_dir: Path = base_dir / "data"
+    db_path: Path | None = None
+    uploads_dir: Path | None = None
+
+    @property
+    def database_path(self) -> Path:
+        """Path to SQLite database file."""
+        if self.db_path:
+            return self.db_path
+        return self.data_dir / "panel.db"
+
+    @property
+    def uploads_directory(self) -> Path:
+        """Path to uploads directory for custom assets."""
+        if self.uploads_dir:
+            return self.uploads_dir
+        return self.data_dir / "uploads"
 
     # -----------------------------------------------------------------------
     # Fixed API URL (optional)
@@ -100,6 +117,11 @@ class Settings(BaseSettings):
     def frontend_index(self) -> Path:
         """Path to frontend index.html."""
         return self.frontend_dir / "index.html"
+
+    @property
+    def frontend_admin(self) -> Path:
+        """Path to frontend admin.html."""
+        return self.frontend_dir / "admin.html"
 
     def configure_logging(self) -> None:
         """Configure application logging."""

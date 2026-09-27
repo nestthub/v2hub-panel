@@ -81,6 +81,45 @@ export function loadSavedTheme() {
   setTheme(saved);
 }
 
+const PRESET_BACKGROUNDS = {
+  default: "",
+  midnight: "linear-gradient(180deg, #05070f, #0a0e1a)",
+  aurora:
+    "radial-gradient(900px 700px at 50% 0%, rgba(74, 222, 128, 0.15), transparent 50%), linear-gradient(180deg, #061510, #08111f)",
+  sunset:
+    "radial-gradient(900px 600px at 80% 10%, rgba(251, 146, 60, 0.15), transparent 45%), radial-gradient(800px 600px at 20% 90%, rgba(167, 139, 250, 0.15), transparent 45%), linear-gradient(180deg, #0f0c1b, #150d22)",
+};
+
+/**
+ * Apply panel-wide default background setting
+ */
+export function applyDefaultBackground(bg) {
+  if (!bg || bg === "default") {
+    document.body.style.background = "";
+    document.body.style.backgroundImage = "";
+    document.body.style.backgroundSize = "";
+    document.body.style.backgroundPosition = "";
+    document.body.style.backgroundAttachment = "";
+    return;
+  }
+
+  if (PRESET_BACKGROUNDS[bg]) {
+    document.body.style.background = PRESET_BACKGROUNDS[bg];
+    document.body.style.backgroundAttachment = "fixed";
+  } else if (
+    bg.startsWith("/uploads/") ||
+    bg.startsWith("http://") ||
+    bg.startsWith("https://") ||
+    bg.startsWith("data:")
+  ) {
+    document.body.style.background = "";
+    document.body.style.backgroundImage = `url("${bg}")`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+  }
+}
+
 /**
  * Create Settings Modal
  */
@@ -148,6 +187,37 @@ function createSettingsModal() {
           <span class="toggle-knob"></span>
 
         </button>
+
+
+      </div>
+
+
+      <div class="setting-row" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
+
+
+        <div class="setting-row-text">
+
+
+          <div class="setting-row-title">
+            Панель администратора
+          </div>
+
+
+          <div class="setting-row-hint">
+            Управление глобальными настройками (фон по умолчанию и др.)
+          </div>
+
+
+        </div>
+
+
+        <a
+          href="/admin"
+          class="btn-secondary"
+          style="padding: 6px 14px; font-size: 0.82rem; text-decoration: none;"
+        >
+          Управление
+        </a>
 
 
       </div>

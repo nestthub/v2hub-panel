@@ -1,8 +1,9 @@
 """API routes package."""
 
-from . import connection, public, subscriptions
+from . import admin, connection, public, subscriptions
 
 __all__ = [
+    "admin",
     "connection",
     "public",
     "subscriptions",

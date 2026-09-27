@@ -22,7 +22,7 @@ from prometheus_client.openmetrics.exposition import (
 from .config import settings
 from .models import ErrorResponse
 from .models.responses import ErrorDetail
-from .routes import auth, connection, providers, public, subscriptions
+from .routes import admin, auth, connection, providers, public, subscriptions
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Awaitable, Callable
@@ -142,6 +142,13 @@ app = FastAPI(
 
 app.mount("/assets", StaticFiles(directory="frontend/assets"), name="assets")
 
+settings.uploads_directory.mkdir(parents=True, exist_ok=True)
+app.mount(
+    "/uploads",
+    StaticFiles(directory=str(settings.uploads_directory)),
+    name="uploads",
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -173,6 +180,7 @@ app.include_router(subscriptions.router)
 app.include_router(providers.router)
 app.include_router(public.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 
 def _compute_asset_version(frontend_dir: Path) -> str:
@@ -357,6 +365,24 @@ def index() -> HTMLResponse:
             # The HTML itself must always be revalidated -- it's what
             # carries the (versioned) links to everything else, so it
             # can never be served stale from a client-side cache.
+            "Cache-Control": "no-cache, must-revalidate",
+        },
+    )
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page() -> HTMLResponse:
+    """Serve admin panel page."""
+    if not settings.frontend_admin.exists():
+        raise HTTPException(
+            status_code=500,
+            detail="Frontend admin.html not found.",
+        )
+    html = settings.frontend_admin.read_text(encoding="utf-8")
+    html = _inject_asset_version(html, ASSET_VERSION)
+    return HTMLResponse(
+        html,
+        headers={
             "Cache-Control": "no-cache, must-revalidate",
         },
     )
