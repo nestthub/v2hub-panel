@@ -11,7 +11,12 @@ from fastapi import HTTPException, Request
 from ..config import settings
 from ..models.responses import ErrorDetail
 
-TOKEN_EXPIRATION_SECONDS = 7 * 86400  # 7 days
+TOKEN_EXPIRATION_SECONDS = 3 * 86400  # 3 days
+
+
+def get_admin_password() -> str | None:
+    """Return configured panel password."""
+    return getattr(settings, "admin_panel_password", None) or getattr(settings, "panel_password", None)
 
 
 def generate_admin_token(secret_key: str, expires_in: int = TOKEN_EXPIRATION_SECONDS) -> str:
@@ -41,37 +46,37 @@ def verify_admin_token(token: str, secret_key: str) -> bool:
 
 def is_admin_authenticated(request: Request) -> bool:
     """Check if request contains valid admin credentials."""
-    secret_key = settings.admin_secret_key
-    if not secret_key:
+    password = get_admin_password()
+    if not password:
         return False
 
     # 1. Check Authorization Bearer header
     auth_header = request.headers.get("Authorization", "").strip()
     if auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
-        if token == secret_key or verify_admin_token(token, secret_key):
+        if hmac.compare_digest(token, password) or verify_admin_token(token, password):
             return True
 
     # 2. Check X-Admin-Secret header
     admin_secret = request.headers.get("X-Admin-Secret", "").strip()
     if admin_secret and (
-        admin_secret == secret_key or verify_admin_token(admin_secret, secret_key)
+        hmac.compare_digest(admin_secret, password) or verify_admin_token(admin_secret, password)
     ):
         return True
 
     # 3. Check Cookie
     cookie_token = request.cookies.get("v2hub_admin_token", "").strip()
-    return bool(cookie_token and verify_admin_token(cookie_token, secret_key))
+    return bool(cookie_token and verify_admin_token(cookie_token, password))
 
 
 def require_admin(request: Request) -> bool:
     """FastAPI dependency to protect admin endpoints."""
-    if not settings.admin_secret_key:
+    if not get_admin_password():
         raise HTTPException(
             status_code=503,
             detail=ErrorDetail(
                 error="admin_not_configured",
-                message="Admin secret key is not configured on this server.",
+                message="Admin panel password is not configured on this server.",
             ).model_dump(),
         )
 

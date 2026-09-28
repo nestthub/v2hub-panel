@@ -2,16 +2,10 @@
  * Admin panel settings management
  */
 
-let adminToken = sessionStorage.getItem("v2hub_admin_token") || "";
 let currentSettings = [];
-let selectedBgValue = "default";
 
-function getAuthHeaders() {
-  const headers = { "Content-Type": "application/json" };
-  if (adminToken) {
-    headers["Authorization"] = `Bearer ${adminToken}`;
-  }
-  return headers;
+function getRequestHeaders() {
+  return { "Content-Type": "application/json" };
 }
 
 // ---------------------------------------------------------------------------
@@ -21,7 +15,7 @@ function getAuthHeaders() {
 async function checkStatus() {
   try {
     const res = await fetch("/api/admin/status", {
-      headers: getAuthHeaders(),
+      headers: getRequestHeaders(),
     });
     if (!res.ok) return { authenticated: false, admin_configured: false };
     return await res.json();
@@ -33,7 +27,7 @@ async function checkStatus() {
 async function loginAdmin(secret) {
   const res = await fetch("/api/admin/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getRequestHeaders(),
     body: JSON.stringify({ secret }),
   });
   const data = await res.json();
@@ -47,15 +41,13 @@ async function loginAdmin(secret) {
 async function logoutAdmin() {
   await fetch("/api/admin/logout", {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: getRequestHeaders(),
   });
-  adminToken = "";
-  sessionStorage.removeItem("v2hub_admin_token");
 }
 
 async function fetchAdminSettings() {
   const res = await fetch("/api/admin/settings", {
-    headers: getAuthHeaders(),
+    headers: getRequestHeaders(),
   });
   if (!res.ok) throw new Error("Failed to load settings");
   return await res.json();
@@ -64,26 +56,12 @@ async function fetchAdminSettings() {
 async function saveSetting(key, value) {
   const res = await fetch(`/api/admin/settings/${encodeURIComponent(key)}`, {
     method: "PUT",
-    headers: getAuthHeaders(),
+    headers: getRequestHeaders(),
     body: JSON.stringify({ value }),
   });
   const data = await res.json();
   if (!res.ok) {
     const msg = data.detail?.message || data.detail || "Failed to save setting";
-    throw new Error(msg);
-  }
-  return data;
-}
-
-async function uploadImage(filename, base64Data) {
-  const res = await fetch("/api/admin/upload", {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ filename, data: base64Data }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const msg = data.detail?.message || data.detail || "Failed to upload image";
     throw new Error(msg);
   }
   return data;
@@ -97,7 +75,6 @@ function setView(authenticated, adminConfigured = true) {
   const loginSection = document.getElementById("section-login");
   const dashboardSection = document.getElementById("section-dashboard");
   const logoutBtn = document.getElementById("btn-logout");
-  const globalBanner = document.getElementById("global-status-banner");
 
   if (!adminConfigured) {
     loginSection.classList.remove("hidden");
@@ -105,7 +82,7 @@ function setView(authenticated, adminConfigured = true) {
     logoutBtn.classList.add("hidden");
     const err = document.getElementById("login-error");
     err.textContent =
-      "Admin access is not configured. Please set V2HUB_ADMIN_SECRET_KEY in server environment.";
+      "Admin access is not configured. Please set V2HUB_ADMIN_PANEL_PASSWORD in server environment.";
     err.classList.remove("hidden");
     return;
   }
@@ -121,87 +98,103 @@ function setView(authenticated, adminConfigured = true) {
   }
 }
 
-function updatePreview(val, options) {
-  const previewBox = document.getElementById("bg-preview-box");
-  if (!previewBox) return;
-
-  const matchedOpt = options?.find((o) => o.value === val);
-  if (matchedOpt && matchedOpt.preview) {
-    previewBox.style.background = matchedOpt.preview;
-    previewBox.style.backgroundImage = "";
-  } else if (val.startsWith("/uploads/") || val.startsWith("http://") || val.startsWith("https://") || val.startsWith("data:")) {
-    previewBox.style.background = "";
-    previewBox.style.backgroundImage = `url("${val}")`;
-    previewBox.style.backgroundSize = "cover";
-    previewBox.style.backgroundPosition = "center";
-  } else {
-    previewBox.style.background = "linear-gradient(180deg, #08111f, #0d1727)";
-    previewBox.style.backgroundImage = "";
-  }
-}
-
-function renderBackgroundSettings(setting) {
-  const container = document.getElementById("preset-container");
-  const customPanel = document.getElementById("custom-image-panel");
-  const customUrlInput = document.getElementById("custom-url-input");
-
+function renderSettings(settingsList) {
+  const container = document.getElementById("settings-container");
+  if (!container) return;
   container.innerHTML = "";
-  selectedBgValue = setting.value || "default";
 
-  const options = setting.options || [];
-  let isCustom = !options.some((o) => o.value === selectedBgValue);
-
-  // Render presets
-  options.forEach((opt) => {
+  settingsList.forEach((setting) => {
     const card = document.createElement("div");
-    card.className = `preset-card ${selectedBgValue === opt.value ? "selected" : ""}`;
-    card.innerHTML = `
-      <div class="preset-thumb" style="background: ${opt.preview || "#111"};"></div>
-      <div class="preset-name">${opt.label}</div>
-      <div class="preset-desc">${opt.description || ""}</div>
-    `;
-    card.addEventListener("click", () => {
-      document.querySelectorAll(".preset-card").forEach((c) => c.classList.remove("selected"));
-      card.classList.add("selected");
-      selectedBgValue = opt.value;
-      customPanel.classList.add("hidden");
-      updatePreview(selectedBgValue, options);
+    card.className = "admin-card";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "admin-card-title";
+    titleEl.textContent = `⚙️ ${setting.label}`;
+    card.appendChild(titleEl);
+
+    const descEl = document.createElement("div");
+    descEl.className = "admin-card-desc";
+    descEl.textContent = setting.description;
+    card.appendChild(descEl);
+
+    let selectedValue = setting.value || setting.default;
+
+    if (setting.type === "select" && Array.isArray(setting.options)) {
+      const grid = document.createElement("div");
+      grid.className = "theme-grid";
+
+      setting.options.forEach((opt) => {
+        const optCard = document.createElement("div");
+        optCard.className = `theme-option-card ${selectedValue === opt.value ? "selected" : ""}`;
+
+        const iconEl = document.createElement("div");
+        iconEl.className = "theme-icon";
+        iconEl.textContent = opt.value === "light" ? "☀️" : "🌙";
+        optCard.appendChild(iconEl);
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "theme-name";
+        nameEl.textContent = opt.label;
+        optCard.appendChild(nameEl);
+
+        if (opt.description) {
+          const optDescEl = document.createElement("div");
+          optDescEl.className = "theme-desc";
+          optDescEl.textContent = opt.description;
+          optCard.appendChild(optDescEl);
+        }
+
+        optCard.addEventListener("click", () => {
+          grid
+            .querySelectorAll(".theme-option-card")
+            .forEach((c) => c.classList.remove("selected"));
+          optCard.classList.add("selected");
+          selectedValue = opt.value;
+        });
+
+        grid.appendChild(optCard);
+      });
+
+      card.appendChild(grid);
+    }
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "btn-row";
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "btn-primary";
+    saveBtn.textContent = `Save ${setting.label}`;
+
+    const statusEl = document.createElement("span");
+    statusEl.className = "status-indicator";
+
+    saveBtn.addEventListener("click", async () => {
+      saveBtn.disabled = true;
+      statusEl.textContent = "Saving...";
+      statusEl.className = "status-indicator";
+
+      try {
+        await saveSetting(setting.key, selectedValue);
+        statusEl.textContent = "Saved successfully!";
+        statusEl.className = "status-indicator success";
+        setTimeout(() => {
+          statusEl.textContent = "";
+        }, 4000);
+      } catch (err) {
+        statusEl.textContent = `Error: ${err.message}`;
+        statusEl.className = "status-indicator error";
+      } finally {
+        saveBtn.disabled = false;
+      }
     });
+
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(statusEl);
+    card.appendChild(btnRow);
+
     container.appendChild(card);
   });
-
-  // Render "Custom" card
-  const customCard = document.createElement("div");
-  customCard.className = `preset-card ${isCustom ? "selected" : ""}`;
-  customCard.innerHTML = `
-    <div class="preset-thumb" style="background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-      🖼️
-    </div>
-    <div class="preset-name">Custom Image</div>
-    <div class="preset-desc">Upload or enter image URL</div>
-  `;
-  customCard.addEventListener("click", () => {
-    document.querySelectorAll(".preset-card").forEach((c) => c.classList.remove("selected"));
-    customCard.classList.add("selected");
-    customPanel.classList.remove("hidden");
-    if (customUrlInput.value.trim()) {
-      selectedBgValue = customUrlInput.value.trim();
-    }
-    updatePreview(selectedBgValue, options);
-  });
-  container.appendChild(customCard);
-
-  if (isCustom) {
-    customPanel.classList.remove("hidden");
-    customUrlInput.value = selectedBgValue;
-  }
-
-  customUrlInput.addEventListener("input", (e) => {
-    selectedBgValue = e.target.value.trim();
-    updatePreview(selectedBgValue, options);
-  });
-
-  updatePreview(selectedBgValue, options);
 }
 
 // ---------------------------------------------------------------------------
@@ -228,9 +221,7 @@ async function init() {
     if (!secret) return;
 
     try {
-      const res = await loginAdmin(secret);
-      adminToken = res.token;
-      sessionStorage.setItem("v2hub_admin_token", adminToken);
+      await loginAdmin(secret);
       setView(true, true);
       await loadSettingsData();
     } catch (err) {
@@ -244,77 +235,12 @@ async function init() {
     await logoutAdmin();
     setView(false, true);
   });
-
-  // Upload handler
-  const uploadBtn = document.getElementById("btn-upload-file");
-  const fileInput = document.getElementById("file-upload-input");
-  const uploadStatus = document.getElementById("upload-status");
-  const customUrlInput = document.getElementById("custom-url-input");
-
-  uploadBtn.addEventListener("click", () => {
-    const file = fileInput.files?.[0];
-    if (!file) {
-      uploadStatus.textContent = "Please select a file first.";
-      uploadStatus.style.color = "var(--danger)";
-      return;
-    }
-
-    uploadStatus.textContent = "Uploading...";
-    uploadStatus.style.color = "var(--accent)";
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const res = await uploadImage(file.name, reader.result);
-        customUrlInput.value = res.url;
-        selectedBgValue = res.url;
-        updatePreview(selectedBgValue);
-        uploadStatus.textContent = "Uploaded successfully!";
-        uploadStatus.style.color = "var(--success)";
-      } catch (err) {
-        uploadStatus.textContent = err.message;
-        uploadStatus.style.color = "var(--danger)";
-      }
-    };
-    reader.onerror = () => {
-      uploadStatus.textContent = "Failed to read file.";
-      uploadStatus.style.color = "var(--danger)";
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // Save handler
-  const saveBtn = document.getElementById("btn-save-settings");
-  const statusIndicator = document.getElementById("save-status-indicator");
-
-  saveBtn.addEventListener("click", async () => {
-    saveBtn.disabled = true;
-    statusIndicator.textContent = "Saving...";
-    statusIndicator.style.color = "var(--muted)";
-
-    try {
-      await saveSetting("default_background", selectedBgValue);
-      statusIndicator.textContent = "Saved successfully! Applied to panel.";
-      statusIndicator.style.color = "var(--success)";
-      setTimeout(() => {
-        statusIndicator.textContent = "";
-      }, 4000);
-    } catch (err) {
-      statusIndicator.textContent = `Error: ${err.message}`;
-      statusIndicator.style.color = "var(--danger)";
-    } finally {
-      saveBtn.disabled = false;
-    }
-  });
 }
 
 async function loadSettingsData() {
   try {
     currentSettings = await fetchAdminSettings();
-    const bgSetting = currentSettings.find((s) => s.key === "default_background");
-    if (bgSetting) {
-      renderBackgroundSettings(bgSetting);
-    }
+    renderSettings(currentSettings);
   } catch (err) {
     console.error("Failed to load admin settings:", err);
   }

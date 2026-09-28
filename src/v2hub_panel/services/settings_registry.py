@@ -29,60 +29,47 @@ class SettingDefinition:
     validator: Callable[[Any], tuple[bool, str | None]] | None = None
 
 
-# Background presets with CSS gradient previews
-BACKGROUND_PRESETS = [
+# Theme options: only dark and light themes are supported
+THEME_OPTIONS = [
     SettingOption(
-        value="default",
-        label="Default Glow",
-        description="Standard dark blue radial glow",
-        preview="radial-gradient(1100px 760px at 10% -5%, rgba(92, 167, 255, 0.2), transparent 44%), linear-gradient(180deg, #08111f, #0d1727)",
+        value="dark",
+        label="Dark Theme",
+        description="Standard dark palette for the panel",
+        preview="#0d1727",
     ),
     SettingOption(
-        value="midnight",
-        label="Midnight Abyss",
-        description="Deep pitch black with subtle indigo accent",
-        preview="linear-gradient(180deg, #05070f, #0a0e1a)",
-    ),
-    SettingOption(
-        value="aurora",
-        label="Aurora Borealis",
-        description="Emerald green and teal atmospheric gradient",
-        preview="radial-gradient(900px 700px at 50% 0%, rgba(74, 222, 128, 0.15), transparent 50%), linear-gradient(180deg, #061510, #08111f)",
-    ),
-    SettingOption(
-        value="sunset",
-        label="Cyber Sunset",
-        description="Purple and orange dusk horizon",
-        preview="radial-gradient(900px 600px at 80% 10%, rgba(251, 146, 60, 0.15), transparent 45%), radial-gradient(800px 600px at 20% 90%, rgba(167, 139, 250, 0.15), transparent 45%), linear-gradient(180deg, #0f0c1b, #150d22)",
+        value="light",
+        label="Light Theme",
+        description="Clean light palette for the panel",
+        preview="#f8fafc",
     ),
 ]
 
+VALID_THEMES = {"dark", "light"}
 
-def validate_background(val: Any) -> tuple[bool, str | None]:
+
+def validate_theme(val: Any) -> tuple[bool, str | None]:
     if not isinstance(val, str) or not val.strip():
-        return False, "Background setting cannot be empty"
-    val = val.strip()
-    preset_keys = {opt.value for opt in BACKGROUND_PRESETS}
-    if val in preset_keys:
-        return True, None
-    if val.startswith(("/uploads/", "http://", "https://", "data:image/")):
+        return False, "Theme setting cannot be empty"
+    val = val.strip().lower()
+    if val in VALID_THEMES:
         return True, None
     return (
         False,
-        f"Background must be a preset ({', '.join(sorted(preset_keys))}) "
-        "or an image URL starting with /uploads/, http://, or https://",
+        f"Theme must be either 'dark' or 'light' (received '{val}')",
     )
 
 
 SETTINGS_REGISTRY: dict[str, SettingDefinition] = {
-    "default_background": SettingDefinition(
-        key="default_background",
+    "default_theme": SettingDefinition(
+        key="default_theme",
         type="select",
-        default="default",
-        label="Default Background",
-        description="Panel-wide background theme or custom image",
+        default="dark",
+        label="Default Theme",
+        description="Panel-wide default theme (dark or light)",
         is_public=True,
-        options=BACKGROUND_PRESETS,
-        validator=validate_background,
+        options=THEME_OPTIONS,
+        validator=validate_theme,
     ),
 }
+

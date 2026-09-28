@@ -17,7 +17,6 @@ class AdminLoginResponse(BaseModel):
     """Successful admin login response."""
 
     ok: bool = True
-    token: str = Field(..., description="Signed admin session token")
 
 
 class AdminStatusResponse(BaseModel):

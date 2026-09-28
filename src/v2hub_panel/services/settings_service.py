@@ -12,6 +12,11 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+SETTINGS_ALIASES: dict[str, str] = {
+    "default_background": "default_theme",
+}
+
+
 class SettingsService:
     """Service to interact with registered settings and their storage."""
 
@@ -28,6 +33,12 @@ class SettingsService:
                     result[key] = stored[key]["value"]
                 else:
                     result[key] = definition.default
+
+        # Provide aliases for backwards compatibility (e.g. default_background -> default_theme)
+        for alias, target in SETTINGS_ALIASES.items():
+            if target in result and alias not in result:
+                result[alias] = result[target]
+
         return result
 
     def get_all_settings_admin(self) -> list[dict[str, Any]]:
@@ -68,28 +79,30 @@ class SettingsService:
 
     def get_setting(self, key: str) -> Any:
         """Get single setting value resolved with default."""
-        if key not in SETTINGS_REGISTRY:
+        target_key = SETTINGS_ALIASES.get(key, key)
+        if target_key not in SETTINGS_REGISTRY:
             return None
-        stored = self.storage.get_setting(key)
+        stored = self.storage.get_setting(target_key)
         if stored:
             return stored["value"]
-        return SETTINGS_REGISTRY[key].default
+        return SETTINGS_REGISTRY[target_key].default
 
     def update_setting(self, key: str, value: Any) -> dict[str, Any]:
         """Validate and persist setting."""
-        if key not in SETTINGS_REGISTRY:
+        target_key = SETTINGS_ALIASES.get(key, key)
+        if target_key not in SETTINGS_REGISTRY:
             raise KeyError(f"Unknown setting: {key}")
 
-        defn = SETTINGS_REGISTRY[key]
+        defn = SETTINGS_REGISTRY[target_key]
         if defn.validator:
             valid, err_msg = defn.validator(value)
             if not valid:
                 raise ValueError(err_msg or "Invalid setting value")
 
-        val_str = str(value).strip() if isinstance(value, str) else str(value)
-        self.storage.set_setting(key, val_str, defn.type)
+        val_str = str(value).strip().lower() if isinstance(value, str) else str(value)
+        self.storage.set_setting(target_key, val_str, defn.type)
         return {
-            "key": key,
+            "key": target_key,
             "value": val_str,
             "type": defn.type,
             "label": defn.label,
@@ -97,8 +110,9 @@ class SettingsService:
 
     def reset_setting(self, key: str) -> None:
         """Reset a setting to its default value."""
-        if key in SETTINGS_REGISTRY:
-            self.storage.delete_setting(key)
+        target_key = SETTINGS_ALIASES.get(key, key)
+        if target_key in SETTINGS_REGISTRY:
+            self.storage.delete_setting(target_key)
 
 
 _settings_service: SettingsService | None = None

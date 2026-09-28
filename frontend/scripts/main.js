@@ -23,7 +23,7 @@ import * as State from "./state.js";
 
 import { fetchServerConfig, fetchTelegramAutoFill } from "./api.js";
 
-import { loadSavedTheme, openSettings, applyDefaultBackground } from "./ui/settings.js";
+import { loadSavedTheme, openSettings, applyDefaultTheme, applyDefaultBackground } from "./ui/settings.js";
 
 async function init() {
   try {
@@ -54,8 +54,11 @@ async function init() {
 
     State.applyServerConfig(cfg);
 
-    if (State.serverConfig.settings?.default_background) {
-      applyDefaultBackground(State.serverConfig.settings.default_background);
+    const serverTheme =
+      State.serverConfig.settings?.default_theme ||
+      State.serverConfig.settings?.default_background;
+    if (serverTheme) {
+      applyDefaultTheme(serverTheme);
     }
 
     const fixedUrl = State.serverConfig.fixed_api_url;

@@ -69,18 +69,18 @@
     .admin-card-desc {
       color: var(--muted);
       font-size: 0.9rem;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
-    .preset-grid {
+    .theme-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 18px 0;
     }
-    .preset-card {
+    .theme-option-card {
       border: 2px solid var(--line);
       border-radius: var(--radius-md);
-      padding: 12px;
+      padding: 16px;
       cursor: pointer;
       transition: all var(--t);
       background: var(--card);
@@ -90,61 +90,27 @@
       text-align: center;
       user-select: none;
     }
-    .preset-card:hover {
+    .theme-option-card:hover {
       border-color: var(--accent);
       transform: translateY(-2px);
     }
-    .preset-card.selected {
+    .theme-option-card.selected {
       border-color: var(--accent);
       background: rgba(92, 167, 255, 0.12);
       box-shadow: 0 0 0 1px var(--accent);
     }
-    .preset-thumb {
-      width: 100%;
-      height: 70px;
-      border-radius: var(--radius-sm);
-      margin-bottom: 10px;
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--line);
+    .theme-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
     }
-    .preset-name {
+    .theme-name {
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 1rem;
       margin-bottom: 4px;
     }
-    .preset-desc {
-      font-size: 0.75rem;
+    .theme-desc {
+      font-size: 0.8rem;
       color: var(--hint);
-    }
-    .preview-box {
-      margin-top: 20px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      height: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-size: cover;
-      background-position: center;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.3s ease;
-    }
-    .preview-inner {
-      background: rgba(15, 23, 40, 0.75);
-      backdrop-filter: blur(8px);
-      padding: 12px 20px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--line);
-      color: var(--text);
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-    .custom-inputs {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px dashed var(--line);
     }
     .auth-box {
       max-width: 440px;
@@ -227,6 +193,16 @@
     .btn-secondary:hover {
       background: var(--line);
     }
+    .status-indicator {
+      font-size: 0.88rem;
+      transition: color var(--t);
+    }
+    .status-indicator.success {
+      color: var(--success);
+    }
+    .status-indicator.error {
+      color: var(--danger);
+    }
     .hidden {
       display: none !important;
     }
@@ -249,18 +225,18 @@
     <!-- Login View -->
     <div id="section-login" class="admin-card auth-box">
       <div class="admin-card-title">🔐 Admin Authentication</div>
-      <div class="admin-card-desc">Enter your server's admin secret key to access settings management.</div>
+      <div class="admin-card-desc">Enter your server's admin panel password to access settings management.</div>
 
       <div id="login-error" class="error-banner hidden"></div>
 
       <form id="form-login">
         <div class="form-group">
-          <label for="admin-secret-input">Admin Secret Key</label>
+          <label for="admin-secret-input">Admin Panel Password</label>
           <input
             id="admin-secret-input"
             type="password"
             class="form-control"
-            placeholder="V2HUB_ADMIN_SECRET_KEY"
+            placeholder="V2HUB_ADMIN_PANEL_PASSWORD"
             required
             autocomplete="current-password"
           />
@@ -274,59 +250,8 @@
     <!-- Admin Settings Dashboard View -->
     <div id="section-dashboard" class="hidden">
       <div id="global-status-banner" class="hidden"></div>
-
-      <div class="admin-card">
-        <div class="admin-card-title">🎨 Default Background Setting</div>
-        <div class="admin-card-desc">
-          Configure the default background shown across the v2hub panel for all users.
-        </div>
-
-        <div id="preset-container" class="preset-grid">
-          <!-- Populated dynamically from setting options -->
-        </div>
-
-        <!-- Custom Image Upload & URL input -->
-        <div id="custom-image-panel" class="custom-inputs hidden">
-          <div class="form-group">
-            <label for="custom-url-input">Custom Image URL</label>
-            <input
-              id="custom-url-input"
-              type="text"
-              class="form-control"
-              placeholder="https://example.com/background.jpg or /uploads/..."
-            />
-          </div>
-          <div class="form-group">
-            <label for="file-upload-input">Or Upload Local Image (PNG, JPG, WEBP, max 5MB)</label>
-            <div style="display: flex; gap: 8px;">
-              <input
-                id="file-upload-input"
-                type="file"
-                class="form-control"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-              />
-              <button id="btn-upload-file" type="button" class="btn-secondary" style="white-space: nowrap;">
-                Upload
-              </button>
-            </div>
-            <div id="upload-status" style="font-size: 0.8rem; margin-top: 4px; color: var(--hint);"></div>
-          </div>
-        </div>
-
-        <!-- Live Preview -->
-        <label style="font-weight: 500; font-size: 0.88rem; display: block; margin-top: 16px;">
-          Live Background Preview
-        </label>
-        <div id="bg-preview-box" class="preview-box">
-          <div class="preview-inner">Panel Card Preview Text</div>
-        </div>
-
-        <div class="btn-row">
-          <button id="btn-save-settings" type="button" class="btn-primary">
-            Save Background
-          </button>
-          <span id="save-status-indicator" style="font-size: 0.88rem;"></span>
-        </div>
+      <div id="settings-container">
+        <!-- Populated dynamically from registered settings -->
       </div>
     </div>
   </div>

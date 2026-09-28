@@ -81,43 +81,27 @@ export function loadSavedTheme() {
   setTheme(saved);
 }
 
-const PRESET_BACKGROUNDS = {
-  default: "",
-  midnight: "linear-gradient(180deg, #05070f, #0a0e1a)",
-  aurora:
-    "radial-gradient(900px 700px at 50% 0%, rgba(74, 222, 128, 0.15), transparent 50%), linear-gradient(180deg, #061510, #08111f)",
-  sunset:
-    "radial-gradient(900px 600px at 80% 10%, rgba(251, 146, 60, 0.15), transparent 45%), radial-gradient(800px 600px at 20% 90%, rgba(167, 139, 250, 0.15), transparent 45%), linear-gradient(180deg, #0f0c1b, #150d22)",
-};
+/**
+ * Apply panel-wide default theme setting
+ */
+export function applyDefaultTheme(theme) {
+  if (!theme) return;
+  const effectiveTheme = theme.toLowerCase() === "light" ? "light" : "dark";
+  // Only apply default if user hasn't chosen an explicit theme in localStorage
+  if (!localStorage.getItem("v2hub_theme")) {
+    setTheme(effectiveTheme);
+    const toggle = $("theme-toggle");
+    if (toggle) {
+      toggle.classList.toggle("on", effectiveTheme === "dark");
+    }
+  }
+}
 
 /**
- * Apply panel-wide default background setting
+ * Backwards compatibility helper for default_background setting
  */
 export function applyDefaultBackground(bg) {
-  if (!bg || bg === "default") {
-    document.body.style.background = "";
-    document.body.style.backgroundImage = "";
-    document.body.style.backgroundSize = "";
-    document.body.style.backgroundPosition = "";
-    document.body.style.backgroundAttachment = "";
-    return;
-  }
-
-  if (PRESET_BACKGROUNDS[bg]) {
-    document.body.style.background = PRESET_BACKGROUNDS[bg];
-    document.body.style.backgroundAttachment = "fixed";
-  } else if (
-    bg.startsWith("/uploads/") ||
-    bg.startsWith("http://") ||
-    bg.startsWith("https://") ||
-    bg.startsWith("data:")
-  ) {
-    document.body.style.background = "";
-    document.body.style.backgroundImage = `url("${bg}")`;
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
-  }
+  applyDefaultTheme(bg);
 }
 
 /**
@@ -204,7 +188,7 @@ function createSettingsModal() {
 
 
           <div class="setting-row-hint">
-            Управление глобальными настройками (фон по умолчанию и др.)
+            Управление глобальными настройками (тема оформления и др.)
           </div>
 
 

@@ -87,6 +87,16 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     admin_secret_key: str | None = None
 
+    # -----------------------------------------------------------------------
+    # Admin Panel (optional)
+    #
+    # Password required to log in to the admin settings panel (/admin).
+    # Kept separate from admin_secret_key (which communicates with upstream
+    # v2hub-admin for Telegram autofill) to prevent credential leakage.
+    # -----------------------------------------------------------------------
+    admin_panel_password: str | None = None
+    panel_password: str | None = None
+
     @property
     def telegram_autofill_enabled(self) -> bool:
         """

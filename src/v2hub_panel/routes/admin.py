@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hmac
 import io
 import logging
 import time
@@ -26,6 +27,7 @@ from ..models.responses import ErrorDetail
 from ..services.settings_service import get_settings_service
 from ..utils.admin_auth import (
     generate_admin_token,
+    get_admin_password,
     is_admin_authenticated,
     require_admin,
 )
@@ -43,46 +45,53 @@ def get_admin_status(request: Request) -> AdminStatusResponse:
     """Return whether the current request is authenticated and admin is configured."""
     return AdminStatusResponse(
         authenticated=is_admin_authenticated(request),
-        admin_configured=bool(settings.admin_secret_key),
+        admin_configured=bool(get_admin_password()),
     )
 
 
 @router.post("/login", response_model=AdminLoginResponse)
 def admin_login(payload: AdminLoginRequest, response: Response) -> AdminLoginResponse:
-    """Authenticate with admin secret key."""
-    if not settings.admin_secret_key:
+    """Authenticate with admin panel password."""
+    password = get_admin_password()
+    if not password:
         raise HTTPException(
             status_code=503,
             detail=ErrorDetail(
                 error="admin_not_configured",
-                message="Admin secret key is not configured on this server.",
+                message="Admin panel password is not configured on this server.",
             ).model_dump(),
         )
 
-    if payload.secret != settings.admin_secret_key:
+    if not hmac.compare_digest(payload.secret, password):
         raise HTTPException(
             status_code=401,
             detail=ErrorDetail(
                 error="invalid_credentials",
-                message="Invalid admin secret key.",
+                message="Invalid admin panel password.",
             ).model_dump(),
         )
 
-    token = generate_admin_token(settings.admin_secret_key)
+    token = generate_admin_token(password)
     response.set_cookie(
         key="v2hub_admin_token",
         value=token,
-        max_age=7 * 86400,
+        max_age=3 * 86400,
         httponly=True,
+        secure=True,
         samesite="lax",
     )
-    return AdminLoginResponse(ok=True, token=token)
+    return AdminLoginResponse(ok=True)
 
 
 @router.post("/logout")
 def admin_logout(response: Response) -> dict[str, bool]:
     """Clear admin session cookie."""
-    response.delete_cookie(key="v2hub_admin_token")
+    response.delete_cookie(
+        key="v2hub_admin_token",
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
     return {"ok": True}
 
 
