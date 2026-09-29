@@ -72,4 +72,3 @@ SETTINGS_REGISTRY: dict[str, SettingDefinition] = {
         validator=validate_theme,
     ),
 }
-

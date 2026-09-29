@@ -16,7 +16,7 @@ TOKEN_EXPIRATION_SECONDS = 3 * 86400  # 3 days
 
 def get_admin_password() -> str | None:
     """Return configured panel password."""
-    return getattr(settings, "admin_panel_password", None) or getattr(settings, "panel_password", None)
+    return settings.admin_panel_password
 
 
 def generate_admin_token(secret_key: str, expires_in: int = TOKEN_EXPIRATION_SECONDS) -> str:
@@ -54,14 +54,12 @@ def is_admin_authenticated(request: Request) -> bool:
     auth_header = request.headers.get("Authorization", "").strip()
     if auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
-        if hmac.compare_digest(token, password) or verify_admin_token(token, password):
+        if verify_admin_token(token, password):
             return True
 
     # 2. Check X-Admin-Secret header
     admin_secret = request.headers.get("X-Admin-Secret", "").strip()
-    if admin_secret and (
-        hmac.compare_digest(admin_secret, password) or verify_admin_token(admin_secret, password)
-    ):
+    if admin_secret and verify_admin_token(admin_secret, password):
         return True
 
     # 3. Check Cookie

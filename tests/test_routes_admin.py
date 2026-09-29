@@ -16,7 +16,6 @@ def test_admin_page(client):
 def test_admin_status_unconfigured(client):
     with (
         patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", None),
-        patch("v2hub_panel.utils.admin_auth.settings.panel_password", None),
     ):
         res = client.get("/api/admin/status")
         assert res.status_code == 200
@@ -33,7 +32,6 @@ def test_admin_status_unauthenticated(client):
 def test_admin_login_unconfigured(client):
     with (
         patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", None),
-        patch("v2hub_panel.utils.admin_auth.settings.panel_password", None),
     ):
         res = client.post("/api/admin/login", json={"secret": "any"})
         assert res.status_code == 503
@@ -94,19 +92,38 @@ def test_admin_settings_protected_requires_auth(client):
 
 
 def test_admin_settings_list_with_auth(client):
+    from v2hub_panel.utils.admin_auth import generate_admin_token
+
     with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
-        headers = {"Authorization": f"Bearer {ADMIN_SECRET}"}
+        headers = {"Authorization": f"Bearer {generate_admin_token(ADMIN_SECRET)}"}
         res = client.get("/api/admin/settings", headers=headers)
         assert res.status_code == 200
         items = res.json()
         assert any(i["key"] == "default_theme" for i in items)
 
 
+def test_admin_settings_rejects_raw_password_headers(client):
+    with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
+        bearer_res = client.get(
+            "/api/admin/settings",
+            headers={"Authorization": f"Bearer {ADMIN_SECRET}"},
+        )
+        secret_res = client.get(
+            "/api/admin/settings",
+            headers={"X-Admin-Secret": ADMIN_SECRET},
+        )
+
+        assert bearer_res.status_code == 401
+        assert secret_res.status_code == 401
+
+
 def test_admin_update_setting(client, tmp_path):
+    from v2hub_panel.utils.admin_auth import generate_admin_token
+
     with (
         patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET),
     ):
-        headers = {"Authorization": f"Bearer {ADMIN_SECRET}"}
+        headers = {"Authorization": f"Bearer {generate_admin_token(ADMIN_SECRET)}"}
 
         # Valid update: "light"
         res = client.put(

@@ -87,7 +87,6 @@ class Settings(BaseSettings):
     # v2hub-admin for Telegram autofill) to prevent credential leakage.
     # -----------------------------------------------------------------------
     admin_panel_password: str | None = None
-    panel_password: str | None = None
 
     @property
     def telegram_autofill_enabled(self) -> bool:
