@@ -5,8 +5,6 @@ from .admin import (
     AdminLoginResponse,
     AdminStatusResponse,
     UpdateSettingRequest,
-    UploadImageRequest,
-    UploadImageResponse,
 )
 from .requests import (
     ListSubscriptionsRequest,
@@ -48,6 +46,4 @@ __all__ = [
     "TelegramAuthRequest",
     "TelegramAuthResponse",
     "UpdateSettingRequest",
-    "UploadImageRequest",
-    "UploadImageResponse",
 ]

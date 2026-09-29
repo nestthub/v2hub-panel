@@ -30,16 +30,3 @@ class UpdateSettingRequest(BaseModel):
     """Request to update a registered setting."""
 
     value: Any = Field(..., description="New setting value")
-
-
-class UploadImageRequest(BaseModel):
-    """Base64 image upload request."""
-
-    filename: str = Field(..., min_length=1, description="Original filename")
-    data: str = Field(..., min_length=1, description="Data URL or base64 string")
-
-
-class UploadImageResponse(BaseModel):
-    """Uploaded image response."""
-
-    url: str = Field(..., description="Public URL path to the uploaded image")

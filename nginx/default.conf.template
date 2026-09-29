@@ -136,7 +136,7 @@ server {
 
     location = /api/admin/login {
 
-        limit_req zone=admin_login burst=2 nodelay;
+        limit_req zone=admin_login;
         limit_req_status 429;
 
 

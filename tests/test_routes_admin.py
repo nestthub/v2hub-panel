@@ -2,22 +2,9 @@
 
 from __future__ import annotations
 
-import base64
-import io
 from unittest.mock import patch
 
-from PIL import Image
-
 ADMIN_SECRET = "super-secret-admin-key"
-
-
-def make_test_png_base64() -> str:
-    """Generate a tiny valid PNG image base64 data URL."""
-    img = Image.new("RGB", (10, 10), color="blue")
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    raw = base64.b64encode(buf.getvalue()).decode("ascii")
-    return f"data:image/png;base64,{raw}"
 
 
 def test_admin_page(client):
@@ -28,8 +15,8 @@ def test_admin_page(client):
 
 def test_admin_status_unconfigured(client):
     with (
-        patch("v2hub_panel.routes.admin.settings.admin_panel_password", None),
-        patch("v2hub_panel.routes.admin.settings.panel_password", None),
+        patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", None),
+        patch("v2hub_panel.utils.admin_auth.settings.panel_password", None),
     ):
         res = client.get("/api/admin/status")
         assert res.status_code == 200
@@ -37,7 +24,7 @@ def test_admin_status_unconfigured(client):
 
 
 def test_admin_status_unauthenticated(client):
-    with patch("v2hub_panel.routes.admin.settings.admin_panel_password", ADMIN_SECRET):
+    with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
         res = client.get("/api/admin/status")
         assert res.status_code == 200
         assert res.json() == {"authenticated": False, "admin_configured": True}
@@ -45,21 +32,21 @@ def test_admin_status_unauthenticated(client):
 
 def test_admin_login_unconfigured(client):
     with (
-        patch("v2hub_panel.routes.admin.settings.admin_panel_password", None),
-        patch("v2hub_panel.routes.admin.settings.panel_password", None),
+        patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", None),
+        patch("v2hub_panel.utils.admin_auth.settings.panel_password", None),
     ):
         res = client.post("/api/admin/login", json={"secret": "any"})
         assert res.status_code == 503
 
 
 def test_admin_login_invalid_credentials(client):
-    with patch("v2hub_panel.routes.admin.settings.admin_panel_password", ADMIN_SECRET):
+    with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
         res = client.post("/api/admin/login", json={"secret": "wrong"})
         assert res.status_code == 401
 
 
 def test_admin_login_success(client):
-    with patch("v2hub_panel.routes.admin.settings.admin_panel_password", ADMIN_SECRET):
+    with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
         res = client.post("/api/admin/login", json={"secret": ADMIN_SECRET})
         assert res.status_code == 200
         data = res.json()
@@ -81,7 +68,6 @@ def test_admin_cookie_auth_flow():
 
     with (
         patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET),
-        patch("v2hub_panel.routes.admin.settings.admin_panel_password", ADMIN_SECRET),
         TestClient(app, base_url="https://testserver") as https_client,
     ):
         # 1. Login and obtain HttpOnly Secure cookie
@@ -119,7 +105,6 @@ def test_admin_settings_list_with_auth(client):
 def test_admin_update_setting(client, tmp_path):
     with (
         patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET),
-        patch("v2hub_panel.routes.admin.settings.admin_panel_password", ADMIN_SECRET),
     ):
         headers = {"Authorization": f"Bearer {ADMIN_SECRET}"}
 
@@ -170,29 +155,9 @@ def test_admin_update_setting(client, tmp_path):
         assert not_found_res.status_code == 404
 
 
-def test_admin_upload_image(client, tmp_path):
-    with (
-        patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET),
-        patch("v2hub_panel.routes.admin.settings.uploads_dir", tmp_path / "uploads"),
-    ):
-        headers = {"Authorization": f"Bearer {ADMIN_SECRET}"}
-        payload = {
-            "filename": "my-bg.png",
-            "data": make_test_png_base64(),
-        }
-        res = client.post("/api/admin/upload", headers=headers, json=payload)
-        assert res.status_code == 200
-        data = res.json()
-        assert "url" in data
-        assert data["url"].startswith("/uploads/bg_")
-
-
-def test_admin_upload_invalid_data(client):
-    with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
-        headers = {"Authorization": f"Bearer {ADMIN_SECRET}"}
-        payload = {
-            "filename": "my-bg.png",
-            "data": "not-valid-base64@@",
-        }
-        res = client.post("/api/admin/upload", headers=headers, json=payload)
-        assert res.status_code == 400
+def test_admin_image_upload_is_not_available(client):
+    res = client.post(
+        "/api/admin/upload",
+        json={"filename": "background.png", "data": "data:image/png;base64,AAAA"},
+    )
+    assert res.status_code == 404

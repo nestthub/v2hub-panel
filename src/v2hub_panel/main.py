@@ -142,13 +142,6 @@ app = FastAPI(
 
 app.mount("/assets", StaticFiles(directory="frontend/assets"), name="assets")
 
-settings.uploads_directory.mkdir(parents=True, exist_ok=True)
-app.mount(
-    "/uploads",
-    StaticFiles(directory=str(settings.uploads_directory)),
-    name="uploads",
-)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

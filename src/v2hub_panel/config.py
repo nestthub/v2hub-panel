@@ -35,7 +35,6 @@ class Settings(BaseSettings):
     frontend_dir: Path = base_dir / "frontend"
     data_dir: Path = base_dir / "data"
     db_path: Path | None = None
-    uploads_dir: Path | None = None
 
     @property
     def database_path(self) -> Path:
@@ -43,13 +42,6 @@ class Settings(BaseSettings):
         if self.db_path:
             return self.db_path
         return self.data_dir / "panel.db"
-
-    @property
-    def uploads_directory(self) -> Path:
-        """Path to uploads directory for custom assets."""
-        if self.uploads_dir:
-            return self.uploads_dir
-        return self.data_dir / "uploads"
 
     # -----------------------------------------------------------------------
     # Fixed API URL (optional)
