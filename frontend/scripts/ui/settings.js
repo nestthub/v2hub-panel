@@ -56,14 +56,16 @@ export function toggleTheme() {
 /**
  * Apply Theme
  */
-function setTheme(theme) {
+function setTheme(theme, persist = true) {
   currentTheme = theme;
 
   document.body.classList.toggle("dark-theme", theme === "dark");
 
   document.body.classList.toggle("light-theme", theme === "light");
 
-  localStorage.setItem("v2hub_theme", theme);
+  if (persist) {
+    localStorage.setItem("v2hub_theme", theme);
+  }
 }
 
 /**
@@ -76,9 +78,11 @@ function setTheme(theme) {
  * CSS classes stay in sync with localStorage / the settings toggle.
  */
 export function loadSavedTheme() {
-  const saved = localStorage.getItem("v2hub_theme") || "dark";
+  const saved = localStorage.getItem("v2hub_theme");
 
-  setTheme(saved);
+  if (saved) {
+    setTheme(saved, false);
+  }
 }
 
 /**
@@ -89,7 +93,7 @@ export function applyDefaultTheme(theme) {
   const effectiveTheme = theme.toLowerCase() === "light" ? "light" : "dark";
   // Only apply default if user hasn't chosen an explicit theme in localStorage
   if (!localStorage.getItem("v2hub_theme")) {
-    setTheme(effectiveTheme);
+    setTheme(effectiveTheme, false);
     const toggle = $("theme-toggle");
     if (toggle) {
       toggle.classList.toggle("on", effectiveTheme === "dark");
@@ -171,37 +175,6 @@ function createSettingsModal() {
           <span class="toggle-knob"></span>
 
         </button>
-
-
-      </div>
-
-
-      <div class="setting-row" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
-
-
-        <div class="setting-row-text">
-
-
-          <div class="setting-row-title">
-            Панель администратора
-          </div>
-
-
-          <div class="setting-row-hint">
-            Управление глобальными настройками (тема оформления и др.)
-          </div>
-
-
-        </div>
-
-
-        <a
-          href="/admin"
-          class="btn-secondary"
-          style="padding: 6px 14px; font-size: 0.82rem; text-decoration: none;"
-        >
-          Управление
-        </a>
 
 
       </div>
