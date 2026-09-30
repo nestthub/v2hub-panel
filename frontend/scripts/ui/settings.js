@@ -56,14 +56,16 @@ export function toggleTheme() {
 /**
  * Apply Theme
  */
-function setTheme(theme) {
+function setTheme(theme, persist = true) {
   currentTheme = theme;
 
   document.body.classList.toggle("dark-theme", theme === "dark");
 
   document.body.classList.toggle("light-theme", theme === "light");
 
-  localStorage.setItem("v2hub_theme", theme);
+  if (persist) {
+    localStorage.setItem("v2hub_theme", theme);
+  }
 }
 
 /**
@@ -76,9 +78,34 @@ function setTheme(theme) {
  * CSS classes stay in sync with localStorage / the settings toggle.
  */
 export function loadSavedTheme() {
-  const saved = localStorage.getItem("v2hub_theme") || "dark";
+  const saved = localStorage.getItem("v2hub_theme");
 
-  setTheme(saved);
+  if (saved) {
+    setTheme(saved, false);
+  }
+}
+
+/**
+ * Apply panel-wide default theme setting
+ */
+export function applyDefaultTheme(theme) {
+  if (!theme) return;
+  const effectiveTheme = theme.toLowerCase() === "light" ? "light" : "dark";
+  // Only apply default if user hasn't chosen an explicit theme in localStorage
+  if (!localStorage.getItem("v2hub_theme")) {
+    setTheme(effectiveTheme, false);
+    const toggle = $("theme-toggle");
+    if (toggle) {
+      toggle.classList.toggle("on", effectiveTheme === "dark");
+    }
+  }
+}
+
+/**
+ * Backwards compatibility helper for default_background setting
+ */
+export function applyDefaultBackground(bg) {
+  applyDefaultTheme(bg);
 }
 
 /**

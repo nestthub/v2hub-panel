@@ -255,11 +255,13 @@ export function clearConnectionLocal() {
 export const serverConfig = {
   fixed_api_url: null,
   telegram_autofill_enabled: false,
+  settings: {},
 };
 
 export function applyServerConfig(cfg) {
   serverConfig.fixed_api_url = cfg?.fixed_api_url ?? null;
   serverConfig.telegram_autofill_enabled = !!cfg?.telegram_autofill_enabled;
+  serverConfig.settings = cfg?.settings || {};
 }
 
 export function getEffectiveBaseUrl() {

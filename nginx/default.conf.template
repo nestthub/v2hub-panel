@@ -22,6 +22,7 @@ upstream v2hub_backend {
 # Rate limits
 limit_req_zone $binary_remote_addr zone=api:10m rate=5r/s;
 limit_req_zone $binary_remote_addr zone=sub:10m rate=3r/s;
+limit_req_zone $binary_remote_addr zone=admin_login:10m rate=1r/s;
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +120,23 @@ server {
     location /sub/ {
 
         limit_req zone=sub burst=10 nodelay;
+        limit_req_status 429;
+
+
+        proxy_pass http://v2hub_backend;
+
+        include /etc/nginx/proxy_params;
+    }
+
+
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Admin login brute-force protection
+    # ─────────────────────────────────────────────────────────────────────────
+
+    location = /api/admin/login {
+
+        limit_req zone=admin_login;
         limit_req_status 429;
 
 

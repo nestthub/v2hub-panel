@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     # Paths
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
     frontend_dir: Path = base_dir / "frontend"
+    data_dir: Path = base_dir / "data"
+    db_path: Path | None = None
+
+    @property
+    def database_path(self) -> Path:
+        """Path to SQLite database file."""
+        if self.db_path:
+            return self.db_path
+        return self.data_dir / "panel.db"
 
     # -----------------------------------------------------------------------
     # Fixed API URL (optional)
@@ -70,6 +79,15 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     admin_secret_key: str | None = None
 
+    # -----------------------------------------------------------------------
+    # Admin Panel (optional)
+    #
+    # Password required to log in to the admin settings panel (/admin).
+    # Kept separate from admin_secret_key (which communicates with upstream
+    # v2hub-admin for Telegram autofill) to prevent credential leakage.
+    # -----------------------------------------------------------------------
+    admin_panel_password: str | None = None
+
     @property
     def telegram_autofill_enabled(self) -> bool:
         """
@@ -100,6 +118,11 @@ class Settings(BaseSettings):
     def frontend_index(self) -> Path:
         """Path to frontend index.html."""
         return self.frontend_dir / "index.html"
+
+    @property
+    def frontend_admin(self) -> Path:
+        """Path to frontend admin.html."""
+        return self.frontend_dir / "admin.html"
 
     def configure_logging(self) -> None:
         """Configure application logging."""
