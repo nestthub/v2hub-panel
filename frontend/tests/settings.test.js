@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  applyDefaultTheme,
-  loadSavedTheme,
-} from "../scripts/ui/settings.js";
+import { applyDefaultTheme, loadSavedTheme } from "../scripts/ui/settings.js";
 
 describe("theme defaults", () => {
   beforeEach(() => {

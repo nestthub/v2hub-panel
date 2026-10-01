@@ -9,6 +9,7 @@ import {
   toSourceItem,
   normalizeSources,
   inferBadgeClass,
+  formatBadgeLabel,
   formatSource,
   extractComment,
   validateBaseUrl,
@@ -263,6 +264,61 @@ describe("inferBadgeClass", () => {
 
   it("defaults to badge-config for unknown types", () => {
     expect(inferBadgeClass("something_else")).toBe("badge-config");
+  });
+});
+
+describe("formatBadgeLabel", () => {
+  it("prefixes config sources with their URI scheme", () => {
+    expect(
+      formatBadgeLabel({
+        source_type: "config",
+        data: "vless://uuid@host:443?params#comment",
+      }),
+    ).toBe("vless · config");
+    expect(
+      formatBadgeLabel({
+        source_type: "config",
+        data: "trojan://pass@host:443",
+      }),
+    ).toBe("trojan · config");
+    expect(
+      formatBadgeLabel({
+        source_type: "config",
+        data: "ss://base64@host:8388",
+      }),
+    ).toBe("ss · config");
+  });
+
+  it("defaults source_type to config when missing", () => {
+    expect(formatBadgeLabel({ data: "vmess://xxx" })).toBe("vmess · config");
+  });
+
+  it("falls back to plain 'config' when data is empty or missing", () => {
+    expect(formatBadgeLabel({ source_type: "config", data: "" })).toBe(
+      "config",
+    );
+    expect(formatBadgeLabel({ source_type: "config" })).toBe("config");
+  });
+
+  it("uses the whole string as the scheme if :// is absent", () => {
+    // No "://" separator means split()[0] is the full string — shown
+    // as-is rather than silently dropped, so malformed data is still
+    // visible to the admin instead of just saying "config".
+    expect(formatBadgeLabel({ source_type: "config", data: "not-a-uri" })).toBe(
+      "not-a-uri · config",
+    );
+  });
+
+  it("leaves non-config types unprefixed, regardless of data", () => {
+    expect(
+      formatBadgeLabel({
+        source_type: "external_url",
+        data: "https://example.com/sub",
+      }),
+    ).toBe("external_url");
+    expect(
+      formatBadgeLabel({ source_type: "internal_token", data: "abc123" }),
+    ).toBe("internal_token");
   });
 });
 
