@@ -214,6 +214,36 @@ export function inferBadgeClass(type) {
 }
 
 /**
+ * Build the label shown inside a source's type badge.
+ *
+ * For CONFIG sources, `src.data` is a proxy URI such as
+ * "vless://uuid@host:port?...#comment" — knowing the protocol at a
+ * glance (vless / vmess / ss / trojan / ...) is more useful than the
+ * generic "config" label alone, so it's prefixed in front of it:
+ * "VLESS · CONFIG". Splitting on "://" and taking the first part is
+ * enough since that's exactly the URI scheme.
+ *
+ * external_url / internal_token sources aren't proxy URIs (they're an
+ * https:// subscription link or an opaque internal token), so no
+ * protocol is meaningful there — the type name is shown as-is.
+ *
+ * @param {object} src - Source item (with .source_type and .data)
+ * @returns {string} Badge label text
+ */
+export function formatBadgeLabel(src) {
+  const type = src?.source_type || "config";
+
+  if (type !== "config") {
+    return type;
+  }
+
+  const raw = typeof src?.data === "string" ? src.data : "";
+  const scheme = raw.split("://")[0]?.trim().toLowerCase();
+
+  return scheme ? `${scheme} · ${type}` : type;
+}
+
+/**
  * Get avatar color class by index
  * @param {number} index - Index
  * @returns {string} Avatar color class

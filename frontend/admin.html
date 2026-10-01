@@ -1,261 +1,275 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>v2hub Admin — Settings</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>v2hub Admin — Settings</title>
 
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
-  <link rel="stylesheet" href="/static/styles/variables.css" />
-  <link rel="stylesheet" href="/static/styles/base.css" />
-  <link rel="stylesheet" href="/static/styles/layout.css" />
-  <link rel="stylesheet" href="/static/styles/components.css" />
-  <link rel="stylesheet" href="/static/styles/components-advanced.css" />
-  <link rel="stylesheet" href="/static/styles/modals.css" />
+    <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
+    <link rel="stylesheet" href="/static/styles/variables.css" />
+    <link rel="stylesheet" href="/static/styles/base.css" />
+    <link rel="stylesheet" href="/static/styles/layout.css" />
+    <link rel="stylesheet" href="/static/styles/components.css" />
+    <link rel="stylesheet" href="/static/styles/components-advanced.css" />
+    <link rel="stylesheet" href="/static/styles/modals.css" />
 
-  <style>
-    .admin-container {
-      max-width: 820px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-    .admin-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 30px;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--line);
-    }
-    .admin-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-    .admin-brand img {
-      width: 32px;
-      height: 32px;
-    }
-    .admin-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: var(--radius-sm);
-      text-transform: uppercase;
-    }
-    .admin-card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      padding: 28px;
-      margin-bottom: 24px;
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      box-shadow: var(--shadow);
-    }
-    .admin-card-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .admin-card-desc {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 16px;
-    }
-    .theme-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin: 18px 0;
-    }
-    .theme-option-card {
-      border: 2px solid var(--line);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      cursor: pointer;
-      transition: all var(--t);
-      background: var(--card);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      user-select: none;
-    }
-    .theme-option-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-2px);
-    }
-    .theme-option-card.selected {
-      border-color: var(--accent);
-      background: rgba(92, 167, 255, 0.12);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-    .theme-icon {
-      font-size: 2rem;
-      margin-bottom: 8px;
-    }
-    .theme-name {
-      font-weight: 600;
-      font-size: 1rem;
-      margin-bottom: 4px;
-    }
-    .theme-desc {
-      font-size: 0.8rem;
-      color: var(--hint);
-    }
-    .auth-box {
-      max-width: 440px;
-      margin: 80px auto;
-    }
-    .error-banner {
-      background: rgba(251, 113, 133, 0.15);
-      border: 1px solid var(--danger);
-      color: var(--danger);
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      margin-bottom: 16px;
-    }
-    .success-banner {
-      background: rgba(74, 222, 128, 0.15);
-      border: 1px solid var(--success);
-      color: var(--success);
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      margin-bottom: 16px;
-    }
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      font-size: 0.88rem;
-    }
-    .form-control {
-      width: 100%;
-      padding: 10px 14px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color var(--t);
-    }
-    .form-control:focus {
-      border-color: var(--accent);
-    }
-    .btn-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 10px 22px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity var(--t);
-    }
-    .btn-primary:hover {
-      opacity: 0.9;
-    }
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .btn-secondary {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--line);
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .btn-secondary:hover {
-      background: var(--line);
-    }
-    .status-indicator {
-      font-size: 0.88rem;
-      transition: color var(--t);
-    }
-    .status-indicator.success {
-      color: var(--success);
-    }
-    .status-indicator.error {
-      color: var(--danger);
-    }
-    .hidden {
-      display: none !important;
-    }
-  </style>
-</head>
-<body class="dark-theme">
-  <div class="admin-container">
-    <div class="admin-header">
-      <div class="admin-brand">
-        <img src="/assets/logo.svg" alt="v2hub logo" />
-        <span>v2hub</span>
-        <span class="admin-badge">Admin</span>
-      </div>
-      <div>
-        <a href="/" class="btn-secondary">← Back to Panel</a>
-        <button id="btn-logout" class="btn-secondary hidden" style="margin-left: 8px;">Logout</button>
-      </div>
-    </div>
-
-    <!-- Login View -->
-    <div id="section-login" class="admin-card auth-box">
-      <div class="admin-card-title">🔐 Admin Authentication</div>
-      <div class="admin-card-desc">Enter your server's admin panel password to access settings management.</div>
-
-      <div id="login-error" class="error-banner hidden"></div>
-
-      <form id="form-login">
-        <div class="form-group">
-          <label for="admin-secret-input">Admin Panel Password</label>
-          <input
-            id="admin-secret-input"
-            type="password"
-            class="form-control"
-            placeholder="V2HUB_ADMIN_PANEL_PASSWORD"
-            required
-            autocomplete="current-password"
-          />
+    <style>
+      .admin-container {
+        max-width: 820px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .admin-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .admin-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      .admin-brand img {
+        width: 32px;
+        height: 32px;
+      }
+      .admin-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        text-transform: uppercase;
+      }
+      .admin-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 28px;
+        margin-bottom: 24px;
+        backdrop-filter: var(--blur);
+        -webkit-backdrop-filter: var(--blur);
+        box-shadow: var(--shadow);
+      }
+      .admin-card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .admin-card-desc {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 16px;
+      }
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 18px 0;
+      }
+      .theme-option-card {
+        border: 2px solid var(--line);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        cursor: pointer;
+        transition: all var(--t);
+        background: var(--card);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        user-select: none;
+      }
+      .theme-option-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .theme-option-card.selected {
+        border-color: var(--accent);
+        background: rgba(92, 167, 255, 0.12);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+      .theme-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+      }
+      .theme-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 4px;
+      }
+      .theme-desc {
+        font-size: 0.8rem;
+        color: var(--hint);
+      }
+      .auth-box {
+        max-width: 440px;
+        margin: 80px auto;
+      }
+      .error-banner {
+        background: rgba(251, 113, 133, 0.15);
+        border: 1px solid var(--danger);
+        color: var(--danger);
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+      }
+      .success-banner {
+        background: rgba(74, 222, 128, 0.15);
+        border: 1px solid var(--success);
+        color: var(--success);
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        font-size: 0.88rem;
+      }
+      .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        color: var(--text);
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color var(--t);
+      }
+      .form-control:focus {
+        border-color: var(--accent);
+      }
+      .btn-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        padding: 10px 22px;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity var(--t);
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--line);
+        padding: 8px 16px;
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn-secondary:hover {
+        background: var(--line);
+      }
+      .status-indicator {
+        font-size: 0.88rem;
+        transition: color var(--t);
+      }
+      .status-indicator.success {
+        color: var(--success);
+      }
+      .status-indicator.error {
+        color: var(--danger);
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <div class="admin-container">
+      <div class="admin-header">
+        <div class="admin-brand">
+          <img src="/assets/logo.svg" alt="v2hub logo" />
+          <span>v2hub</span>
+          <span class="admin-badge">Admin</span>
         </div>
-        <button id="btn-login-submit" type="submit" class="btn-primary" style="width: 100%;">
-          Sign In
-        </button>
-      </form>
-    </div>
+        <div>
+          <a href="/" class="btn-secondary">← Back to Panel</a>
+          <button
+            id="btn-logout"
+            class="btn-secondary hidden"
+            style="margin-left: 8px"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
 
-    <!-- Admin Settings Dashboard View -->
-    <div id="section-dashboard" class="hidden">
-      <div id="global-status-banner" class="hidden"></div>
-      <div id="settings-container">
-        <!-- Populated dynamically from registered settings -->
+      <!-- Login View -->
+      <div id="section-login" class="admin-card auth-box">
+        <div class="admin-card-title">🔐 Admin Authentication</div>
+        <div class="admin-card-desc">
+          Enter your server's admin panel password to access settings
+          management.
+        </div>
+
+        <div id="login-error" class="error-banner hidden"></div>
+
+        <form id="form-login">
+          <div class="form-group">
+            <label for="admin-secret-input">Admin Panel Password</label>
+            <input
+              id="admin-secret-input"
+              type="password"
+              class="form-control"
+              placeholder="V2HUB_ADMIN_PANEL_PASSWORD"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <button
+            id="btn-login-submit"
+            type="submit"
+            class="btn-primary"
+            style="width: 100%"
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
+
+      <!-- Admin Settings Dashboard View -->
+      <div id="section-dashboard" class="hidden">
+        <div id="global-status-banner" class="hidden"></div>
+        <div id="settings-container">
+          <!-- Populated dynamically from registered settings -->
+        </div>
       </div>
     </div>
-  </div>
 
-  <script type="module" src="/static/scripts/admin.js"></script>
-</body>
+    <script type="module" src="/static/scripts/admin.js"></script>
+  </body>
 </html>

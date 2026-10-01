@@ -11,7 +11,7 @@ Group=v2hub
 WorkingDirectory=/opt/v2hub/app
 
 # Use venv if present, otherwise system python
-ExecStart=/opt/v2hub/venv/bin/uvicorn app.main:app \
+ExecStart=/opt/v2hub/venv/bin/uvicorn v2hub_panel.main:app \
     --host 127.0.0.1 \
     --port 8000 \
     --workers 2 \

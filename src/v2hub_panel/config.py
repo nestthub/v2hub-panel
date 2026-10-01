@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import logging
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+try:
+    __version__ = version("v2hub-panel")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 
 class Settings(BaseSettings):
@@ -21,7 +27,7 @@ class Settings(BaseSettings):
 
     # Application
     app_title: str = "v2hub Mini App"
-    app_version: str = "1.0.0"
+    app_version: str = __version__
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     # CORS

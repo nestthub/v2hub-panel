@@ -43,7 +43,7 @@ APP_INFO = Gauge(
     "FastAPI application info",
     ["app_name", "version"],
 )
-APP_INFO.labels(app_name=APP_NAME, version="1.0.0").set(1)
+APP_INFO.labels(app_name=APP_NAME, version=settings.app_version).set(1)
 
 HTTP_REQUESTS_TOTAL = Counter(
     "fastapi_requests_total",

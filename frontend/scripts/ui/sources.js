@@ -16,6 +16,7 @@ import {
   escapeHtml,
   inferBadgeClass,
   formatSource,
+  formatBadgeLabel,
   extractComment,
   clampDepth,
   detectSourceType,
@@ -126,7 +127,7 @@ function buildFullSourceItem(src, idx) {
     <div class="source-status"></div>
     <div class="source-data" title="${escapeHtml(src.data)}">${escapeHtml(shortData)}</div>
     <span class="badge-type ${inferBadgeClass(src.source_type)}">
-      ${escapeHtml(src.source_type || "config")}
+      ${escapeHtml(formatBadgeLabel(src))}
     </span>
     <div class="source-actions">
       <button
@@ -188,7 +189,7 @@ function buildReadOnlySourceItem(src, idx) {
     <div class="source-status"></div>
     <div class="source-data" title="${escapeHtml(src.data)}">${escapeHtml(shortData)}</div>
     <span class="badge-type ${inferBadgeClass(src.source_type)}">
-      ${escapeHtml(src.source_type || "config")}
+      ${escapeHtml(formatBadgeLabel(src))}
     </span>
     <div class="source-actions">
       <button class="mini-btn copy-btn-source" type="button" title="Копировать">⎘</button>

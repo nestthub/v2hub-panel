@@ -23,6 +23,7 @@ def get_frontend_config() -> dict[str, Any]:
     return {
         "fixed_api_url": settings.fixed_api_url,
         "telegram_autofill_enabled": settings.telegram_autofill_enabled,
+        "app_version": settings.app_version,
         "settings": get_settings_service().get_public_settings(),
     }
 

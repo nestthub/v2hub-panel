@@ -23,7 +23,12 @@ import * as State from "./state.js";
 
 import { fetchServerConfig, fetchTelegramAutoFill } from "./api.js";
 
-import { loadSavedTheme, openSettings, applyDefaultTheme, applyDefaultBackground } from "./ui/settings.js";
+import {
+  loadSavedTheme,
+  openSettings,
+  applyDefaultTheme,
+  applyDefaultBackground,
+} from "./ui/settings.js";
 
 async function init() {
   try {
@@ -53,6 +58,11 @@ async function init() {
     const cfg = await fetchServerConfig();
 
     State.applyServerConfig(cfg);
+
+    const versionEl = $("about-version");
+    if (versionEl && State.serverConfig.app_version) {
+      versionEl.textContent = `v${State.serverConfig.app_version}`;
+    }
 
     const serverTheme =
       State.serverConfig.settings?.default_theme ||
