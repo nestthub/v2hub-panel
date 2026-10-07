@@ -17,6 +17,7 @@ import { createSourceListEditor } from "../utils/source-list-editor.js";
 import { showToast, showError } from "./toast.js";
 import { openModal, closeModal } from "./modals.js";
 import { openConnectionModalFor } from "./provider-connections.js";
+import { t } from "../i18n/index.js";
 
 /**
  * Update connection status display in topbar icon
@@ -26,7 +27,7 @@ export function updateConnectionDisplay(connected) {
   const btn = document.querySelector(".icon-btn.primary");
   if (!btn) return;
   btn.classList.toggle("is-connected", !!connected);
-  btn.title = connected ? "Подключено" : "Нет подключения";
+  btn.title = connected ? t("conn.connected") : t("conn.disconnected");
 }
 
 /**
@@ -39,7 +40,7 @@ export function showLoadingList() {
   list.innerHTML = `
     <div class="loading-state">
       <span class="spinner"></span>
-      <div>Загрузка подписок…</div>
+      <div>${escapeHtml(t("list.loading"))}</div>
     </div>
   `;
 }
@@ -66,10 +67,10 @@ function buildSubCard(sub) {
     <div class="sub-avatar">${folderIcon}</div>
     <div class="sub-info">
       <div class="sub-name">${escapeHtml(sub.name || "—")}</div>
-      <div class="sub-desc">${escapeHtml(sub.description || "Без описания")}</div>
+      <div class="sub-desc">${escapeHtml(sub.description || t("list.noDesc"))}</div>
     </div>
     <div class="sub-meta">
-      <span>${sourcesCount} конф.</span>
+      <span>${escapeHtml(t("list.configsShort", { count: sourcesCount }))}</span>
       <span class="chevron">›</span>
     </div>
   `;
@@ -102,7 +103,7 @@ function buildProviderGroup(group) {
   const infoBtn = createElement("button", {
     type: "button",
     class: "provider-group-info-btn",
-    title: `Информация о провайдере «${group.providerName}»`,
+    title: t("provider.infoTitle", { name: group.providerName }),
   });
   infoBtn.innerHTML = `
     <span class="provider-group-icon">🛰️</span>
@@ -183,13 +184,13 @@ export function renderSubscriptionsList() {
     list.innerHTML = isConnected
       ? `<div class="empty">
            <div class="empty-icon">📭</div>
-           <div class="empty-title">Нет подписок</div>
-           <div class="empty-sub">Нажмите «＋ Создать», чтобы добавить первую подписку</div>
+           <div class="empty-title">${escapeHtml(t("list.emptyTitle"))}</div>
+           <div class="empty-sub">${escapeHtml(t("list.emptySub"))}</div>
          </div>`
       : `<div class="empty">
            <div class="empty-icon">🔌</div>
-           <div class="empty-title">Нет подключения</div>
-           <div class="empty-sub">Нажмите кнопку ⌁ в правом верхнем углу, чтобы указать API-адрес и токен</div>
+           <div class="empty-title">${escapeHtml(t("conn.emptyTitle"))}</div>
+           <div class="empty-sub">${escapeHtml(t("conn.emptySub"))}</div>
          </div>`;
     return;
   }
@@ -199,8 +200,8 @@ export function renderSubscriptionsList() {
   if (!personal.length && !providerGroups.length) {
     list.innerHTML = `<div class="empty">
          <div class="empty-icon">📭</div>
-         <div class="empty-title">Нет подписок</div>
-         <div class="empty-sub">Нажмите «＋ Создать», чтобы добавить первую подписку</div>
+         <div class="empty-title">${escapeHtml(t("list.emptyTitle"))}</div>
+         <div class="empty-sub">${escapeHtml(t("list.emptySub"))}</div>
        </div>`;
     return;
   }
@@ -264,16 +265,10 @@ export async function reloadAll() {
       State.clearConnectionLocal();
       State.resetCurrentSubscription();
       hideSaveBar();
-      showError(
-        new Error("Токен недействителен или устарел. Введите новый API-токен."),
-      );
+      showError(new Error(t("err.tokenExpired")));
       openConnectModal();
     } else if (e.status === 429) {
-      showError(
-        new Error(
-          "Слишком много запросов. Подождите немного и попробуйте снова.",
-        ),
-      );
+      showError(new Error(t("err.tooManyWait")));
     } else {
       showError(e);
     }
@@ -299,14 +294,14 @@ export async function loadSelectedSubscription(token, switchScreen = true) {
   if (State.state.loadingEditor) return;
 
   State.setLoadingEditor(true);
-  setText($("editor-title"), "Загрузка…");
-  setText($("editor-subtitle"), "Пожалуйста, подождите");
+  setText($("editor-title"), t("editor.loading"));
+  setText($("editor-subtitle"), t("editor.wait"));
 
   try {
     const data = await API.getSubscription(token);
 
     State.setCurrentSubscription(token, data.sources || []);
-    setText($("editor-title"), data.name || "Подписка");
+    setText($("editor-title"), data.name || t("editor.defaultTitle"));
     setText($("editor-subtitle"), data.description || "mini app");
 
     // Keep the cached list entry in sync so provider_name (and other
@@ -336,15 +331,13 @@ export async function loadSelectedSubscription(token, switchScreen = true) {
     hideSaveBar();
   } catch (e) {
     // Restore editor title on error so it doesn't stay as "Загрузка…"
-    setText($("editor-title"), "Ошибка загрузки");
+    setText($("editor-title"), t("editor.loadError"));
     setText($("editor-subtitle"), "");
 
     if (e.status === 401) {
-      showError(new Error("Неверный токен. Проверьте API-токен."));
+      showError(new Error(t("err.badToken")));
     } else if (e.status === 429) {
-      showError(
-        new Error("Слишком много запросов. Подождите и попробуйте снова."),
-      );
+      showError(new Error(t("err.tooManyWait")));
     } else {
       showError(e);
     }
@@ -412,7 +405,7 @@ export function showScreen(id) {
  */
 export function goBack() {
   if (State.state.hasUnsavedChanges) {
-    if (!confirm("У вас есть несохранённые изменения. Выйти без сохранения?")) {
+    if (!confirm(t("unsaved.confirm"))) {
       return;
     }
     State.markSaved();
@@ -452,7 +445,7 @@ export async function saveChanges() {
     // Disable button to prevent double-submit
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.textContent = "Сохранение…";
+      saveBtn.textContent = t("savebar.saving");
     }
 
     // FIX: раньше отправлялись только строки (s.data), из-за чего
@@ -486,13 +479,13 @@ export async function saveChanges() {
     }
     renderSubscriptionsList();
 
-    showToast("Изменения сохранены");
+    showToast(t("toast.saved"));
   } catch (e) {
     showError(e);
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
-      saveBtn.textContent = "Сохранить изменения";
+      saveBtn.textContent = t("savebar.save");
     }
   }
 }
@@ -511,7 +504,7 @@ export function discardChanges() {
     renderSources();
   });
 
-  showToast("Изменения отменены");
+  showToast(t("toast.discarded"));
 }
 
 /**
@@ -522,7 +515,7 @@ export async function reloadSelected() {
   if (!sub) return;
 
   await loadSelectedSubscription(sub.token, false);
-  showToast("Данные обновлены");
+  showToast(t("toast.refreshed"));
 }
 
 /**
@@ -564,11 +557,11 @@ export async function connectToAPI() {
     const apiToken = getValue($("connect-api-token")).trim();
 
     if (!baseUrl) {
-      showError(new Error("Укажите API URL для подключения."));
+      showError(new Error(t("err.apiUrlConnect")));
       return;
     }
     if (!apiToken) {
-      showError(new Error("Введите API-токен, чтобы подключиться."));
+      showError(new Error(t("err.tokenConnect")));
       return;
     }
 
@@ -581,7 +574,7 @@ export async function connectToAPI() {
 
     closeModal("modal-connect");
     await reloadAll();
-    showToast("Подключено");
+    showToast(t("toast.connected"));
   } catch (e) {
     showError(e);
   }
@@ -610,7 +603,7 @@ export async function disconnectFromAPI() {
     hideSaveBar();
     closeModal("modal-connect");
 
-    showToast("Сброшено");
+    showToast(t("toast.reset"));
   } catch (e) {
     showError(e);
   }
@@ -648,7 +641,7 @@ export async function createSubscription() {
   try {
     const name = getValue($("create-name")).trim();
     if (!name) {
-      showToast("Введите название");
+      showToast(t("toast.enterName"));
       return;
     }
 
@@ -669,8 +662,8 @@ export async function createSubscription() {
     if (rejected.length) {
       showToast(
         rejected.length === 1
-          ? `Не удалось распознать источник: "${rejected[0].slice(0, 40)}"`
-          : `Не удалось распознать ${rejected.length} источник(ов) — проверьте формат`,
+          ? t("toast.sourceRejectedOne", { source: rejected[0].slice(0, 40) })
+          : t("toast.sourceRejectedMany", { count: rejected.length }),
       );
     }
 
@@ -685,7 +678,7 @@ export async function createSubscription() {
     closeModal("modal-create-sub");
     await reloadAll();
     await openEditor(data.token);
-    showToast("Подписка создана");
+    showToast(t("toast.subCreated"));
   } catch (e) {
     showError(e);
   }
@@ -698,7 +691,7 @@ export function openEditSubModal() {
   const sub = State.getCurrentSubscription();
   if (!sub) return;
   if (!State.getSubscriptionCapabilities(sub).editSubscription) {
-    showToast("Подписки провайдера нельзя редактировать");
+    showToast(t("toast.providerNoEdit"));
     return;
   }
 
@@ -715,13 +708,13 @@ export async function saveSubEdit() {
     const sub = State.getCurrentSubscription();
     if (!sub) return;
     if (!State.getSubscriptionCapabilities(sub).editSubscription) {
-      showToast("Подписки провайдера нельзя редактировать");
+      showToast(t("toast.providerNoEdit"));
       return;
     }
 
     const name = getValue($("edit-sub-name")).trim();
     if (!name) {
-      showToast("Введите название");
+      showToast(t("toast.enterName"));
       return;
     }
 
@@ -742,16 +735,14 @@ export async function saveSubEdit() {
       State.state.subscriptions[idx] = updated;
     }
 
-    setText($("editor-title"), updated.name || "Подписка");
+    setText($("editor-title"), updated.name || t("editor.defaultTitle"));
     setText($("editor-subtitle"), updated.description || "mini app");
     renderSubscriptionsList();
 
-    showToast("Подписка обновлена");
+    showToast(t("toast.subUpdated"));
   } catch (e) {
     if (String(e.message || "").includes("not supported")) {
-      showToast(
-        "Редактирование названия не поддерживается этим клиентом v2hub",
-      );
+      showToast(t("toast.renameUnsupported"));
     } else {
       showError(e);
     }
@@ -765,11 +756,11 @@ export async function deleteSubConfirm() {
   const sub = State.getCurrentSubscription();
   if (!sub) return;
   if (!State.getSubscriptionCapabilities(sub).deleteSubscription) {
-    showToast("Подписки провайдера нельзя удалить");
+    showToast(t("toast.providerNoDelete"));
     return;
   }
 
-  if (!confirm(`Удалить подписку «${sub.name}»? Это действие необратимо.`)) {
+  if (!confirm(t("sub.deleteConfirm", { name: sub.name }))) {
     return;
   }
 
@@ -782,7 +773,7 @@ export async function deleteSubConfirm() {
     await reloadAll();
     showScreen("screen-list");
 
-    showToast("Подписка удалена");
+    showToast(t("toast.subDeleted"));
   } catch (e) {
     showError(e);
   }

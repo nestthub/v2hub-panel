@@ -6,6 +6,7 @@
  */
 
 import { $, addClass, removeClass } from "../utils/dom.js";
+import { t } from "../i18n/index.js";
 
 let toastTimer = null;
 let errorTimer = null;
@@ -158,6 +159,10 @@ function parseErrorStructure(error) {
 // Error code → human message mapping
 // ══════════════════════════════════════════════════════════════════════════════
 
+function limitParams(d) {
+  return { count: d.count ?? "?", max: d.max_count ?? "?" };
+}
+
 /**
  * Преобразует error code из нового API в человекочитаемое сообщение.
  *
@@ -173,94 +178,98 @@ function knownErrorCode(code, errorDetail = {}) {
   switch (codeNorm) {
     // ── Лимиты ────────────────────────────────────────────────────────────
     case "too_many_subscriptions":
-      return `Достигнут лимит подписок: ${d.count ?? "?"}/${d.max_count ?? "?"}. Удалите старую подписку или увеличьте лимит.`;
+      return t("errCode.tooManySubscriptions", limitParams(d));
 
     case "too_many_sources":
-      return `Достигнут лимит источников: ${d.count ?? "?"}/${d.max_count ?? "?"}. Удалите лишние источники или увеличьте лимит.`;
+      return t("errCode.tooManySources", limitParams(d));
 
     case "too_many_configs":
-      return `Превышен лимит конфигураций: ${d.count ?? "?"}/${d.max_count ?? "?"}. Удалите часть конфигураций или увеличьте лимит.`;
+      return t("errCode.tooManyConfigs", limitParams(d));
 
     case "too_many_providers":
-      return `Достигнут лимит провайдеров: ${d.count ?? "?"}/${d.max_count ?? "?"}. Чтобы подключить нового, сначала отключите одного из текущих.`;
+      return t("errCode.tooManyProviders", limitParams(d));
 
     case "rate_limit_exceeded": {
       const wait = errorDetail.retry_after ?? d.retry_after;
       return wait
-        ? `Слишком много запросов. Подождите ${wait} сек. и повторите.`
-        : "Слишком много запросов. Подождите и повторите.";
+        ? t("errCode.rateLimitWait", { seconds: wait })
+        : t("errCode.rateLimit");
     }
 
     // ── Повторяемые / конфликтные ошибки ─────────────────────────────────
     case "duplicate_name": {
       const name = d.name || d.conflicting_value || "";
       return name
-        ? `Запись с именем «${name}» уже существует. Выберите другое имя.`
-        : "Запись с таким именем уже существует. Выберите другое имя.";
+        ? t("errCode.duplicateNamed", { name })
+        : t("errCode.duplicate");
     }
 
     case "conflict":
-      return "Возник конфликт данных. Проверьте состояние ресурса и повторите попытку.";
+      return t("errCode.conflict");
 
     // ── Валидация ─────────────────────────────────────────────────────────
     case "invalid_config": {
-      const field = d.field ? ` (поле: ${d.field})` : "";
+      const field = d.field
+        ? t("errCode.invalidConfigField", { field: d.field })
+        : "";
       const errors =
         Array.isArray(d.errors) && d.errors.length
           ? `: ${d.errors.join(", ")}`
           : "";
-      return `Некорректная конфигурация${field}${errors}. Проверьте введённые данные.`;
+      return t("errCode.invalidConfig", { field, errors });
     }
 
     case "invalid_url":
-      return "URL не прошёл проверку безопасности. Используйте публично доступный HTTPS-адрес.";
+      return t("errCode.invalidUrl");
 
     case "validation_error":
-      return "Ошибка валидации данных. Проверьте правильность введённых значений.";
+      return t("errCode.validation");
 
     // ── Аутентификация / авторизация ──────────────────────────────────────
     case "authentication_error":
     case "authentication_failed":
     case "invalid_token":
     case "invalid_credentials":
-      return "Ошибка аутентификации. Проверьте API-токен или учётные данные.";
+      return t("errCode.auth");
 
     case "authorization_error":
     case "forbidden":
     case "access_denied":
     case "permission_denied":
-      return "Доступ запрещён. У вашего токена нет прав на это действие.";
+      return t("errCode.forbidden");
 
     // ── Не найдено ────────────────────────────────────────────────────────
     case "subscription_not_found":
-      return "Подписка не найдена. Возможно, она была удалена.";
+      return t("errCode.subscriptionNotFound");
 
     case "source_not_found":
-      return "Источник не найден. Возможно, он был удалён.";
+      return t("errCode.sourceNotFound");
 
     case "not_found": {
       const { resource, identifier } = d;
       return resource && identifier
-        ? `${resource} «${identifier}» не найден.`
-        : "Запрошенный ресурс не найден.";
+        ? t("errCode.notFoundNamed", { resource, id: identifier })
+        : t("errCode.notFound");
     }
 
     // ── Циклы / глубина ────────────────────────────────────────────────────
     case "circular_reference": {
       const chain = d.chain;
       if (Array.isArray(chain) && chain.length >= 2) {
-        const short = (t) => String(t).slice(0, 8) + "…";
-        return `Обнаружена циклическая зависимость: ${chain.map(short).join(" → ")}`;
+        const short = (id) => String(id).slice(0, 8) + "…";
+        return t("errCode.circularChain", {
+          chain: chain.map(short).join(" → "),
+        });
       }
-      return "Обнаружена циклическая зависимость между источниками.";
+      return t("errCode.circular");
     }
 
     case "nesting_too_deep": {
       const depth = d.current_depth ?? d.depth;
       const max = d.max_depth;
       return depth && max
-        ? `Превышена максимальная глубина вложенности: ${depth}/${max}.`
-        : "Превышена максимальная глубина вложенности.";
+        ? t("errCode.nestingDepth", { depth, max })
+        : t("errCode.nesting");
     }
 
     // ── Внешние источники ─────────────────────────────────────────────────
@@ -268,32 +277,32 @@ function knownErrorCode(code, errorDetail = {}) {
     case "fetch_error": {
       const url = d.url ? ` (${d.url})` : "";
       const reason = d.reason ? `: ${d.reason}` : "";
-      return `Не удалось загрузить внешний источник${url}${reason}. Проверьте доступность адреса.`;
+      return t("errCode.externalFetch", { url, reason });
     }
 
     case "network_error":
-      return "Ошибка сети. Проверьте подключение и доступность API.";
+      return t("errCode.network");
 
     // ── Система / инфраструктура ──────────────────────────────────────────
     case "cache_error": {
       const { operation, reason } = d;
       return operation && reason
-        ? `Ошибка кэша при операции "${operation}": ${reason}.`
-        : "Ошибка кэша на сервере. Попробуйте повторить запрос.";
+        ? t("errCode.cacheOp", { operation, reason })
+        : t("errCode.cache");
     }
 
     case "server_error":
-      return "Внутренняя ошибка сервера. Попробуйте позже.";
+      return t("errCode.internal");
 
     case "service_unavailable":
-      return "Сервис временно недоступен. Попробуйте позже.";
+      return t("errCode.unavailable");
 
     case "timeout":
-      return "Превышено время ожидания. Попробуйте ещё раз.";
+      return t("errCode.timeout");
 
     // ── Общий fallback ────────────────────────────────────────────────────
     default:
-      return serverMessage || codeNorm || "Неизвестная ошибка";
+      return serverMessage || codeNorm || t("errCode.unknown");
   }
 }
 
@@ -324,7 +333,7 @@ function extractHumanMessage(detail) {
  * @param {string} humanMessage
  * @returns {{title: string, hint: string, icon: string, iconClass: string}}
  */
-function classifyError(statusCode, detail, humanMessage) {
+function classifyError(statusCode, detail, humanMessage, isNetwork = false) {
   const msg = (humanMessage || "").toLowerCase();
 
   const errorCode = String(
@@ -341,8 +350,8 @@ function classifyError(statusCode, detail, humanMessage) {
     statusCode === 429
   ) {
     return {
-      title: "Превышен лимит",
-      hint: "Достигнут максимально допустимый лимит.",
+      title: t("errView.limit.title"),
+      hint: t("errView.limit.hint"),
       icon: "🚫",
       iconClass: "icon-validation",
     };
@@ -356,11 +365,11 @@ function classifyError(statusCode, detail, humanMessage) {
       msg.includes("network request failed") ||
       msg.includes("net::") ||
       msg.includes("err_") ||
-      msg.includes("ошибка сети"))
+      isNetwork)
   ) {
     return {
-      title: "Ошибка сети",
-      hint: "Проверьте подключение и доступность API.",
+      title: t("errView.network.title"),
+      hint: t("errView.network.hint"),
       icon: "📡",
       iconClass: "icon-network",
     };
@@ -375,8 +384,8 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "invalid_credentials"
   ) {
     return {
-      title: "Недействительный токен",
-      hint: "Токен неверен или устарел. Введите новый API-токен.",
+      title: t("errView.token.title"),
+      hint: t("errView.token.hint"),
       icon: "🔐",
       iconClass: "icon-validation",
     };
@@ -390,8 +399,8 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "permission_denied"
   ) {
     return {
-      title: "Доступ запрещён",
-      hint: "У вашего токена нет прав на это действие.",
+      title: t("errView.forbidden.title"),
+      hint: t("errView.forbidden.hint"),
       icon: "🚷",
       iconClass: "icon-validation",
     };
@@ -405,8 +414,8 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "not_found"
   ) {
     return {
-      title: "Не найдено",
-      hint: "Ресурс не существует или был удалён.",
+      title: t("errView.notFound.title"),
+      hint: t("errView.notFound.hint"),
       icon: "🔍",
       iconClass: "icon-unknown",
     };
@@ -419,8 +428,8 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "conflict"
   ) {
     return {
-      title: "Конфликт",
-      hint: "Запись с такими данными уже существует.",
+      title: t("errView.conflict.title"),
+      hint: t("errView.conflict.hint"),
       icon: "🔁",
       iconClass: "icon-validation",
     };
@@ -429,8 +438,8 @@ function classifyError(statusCode, detail, humanMessage) {
   // ── Внешние источники ─────────────────────────────────────────────────
   if (errorCode === "external_fetch_error" || errorCode === "fetch_error") {
     return {
-      title: "Ошибка внешнего источника",
-      hint: "Проверьте доступность URL и повторите.",
+      title: t("errView.external.title"),
+      hint: t("errView.external.hint"),
       icon: "🔗",
       iconClass: "icon-network",
     };
@@ -439,8 +448,8 @@ function classifyError(statusCode, detail, humanMessage) {
   // ── Инфраструктура / сервер ───────────────────────────────────────────
   if (statusCode === 502) {
     return {
-      title: "Шлюз недоступен",
-      hint: "Внешний сервис не ответил корректно. Попробуйте позже.",
+      title: t("errView.gateway.title"),
+      hint: t("errView.gateway.hint"),
       icon: "🌐",
       iconClass: "icon-server",
     };
@@ -448,8 +457,8 @@ function classifyError(statusCode, detail, humanMessage) {
 
   if (statusCode === 503 || errorCode === "service_unavailable") {
     return {
-      title: "Сервис недоступен",
-      hint: "Сервер перегружен или на обслуживании. Попробуйте позже.",
+      title: t("errView.unavailable.title"),
+      hint: t("errView.unavailable.hint"),
       icon: "🔧",
       iconClass: "icon-server",
     };
@@ -457,8 +466,8 @@ function classifyError(statusCode, detail, humanMessage) {
 
   if (statusCode === 504 || errorCode === "timeout") {
     return {
-      title: "Превышено время ожидания",
-      hint: "Сервер не ответил вовремя. Попробуйте ещё раз.",
+      title: t("errView.timeout.title"),
+      hint: t("errView.timeout.hint"),
       icon: "⏱",
       iconClass: "icon-server",
     };
@@ -472,8 +481,8 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "cache_error"
   ) {
     return {
-      title: "Ошибка сервера",
-      hint: "Попробуйте повторить запрос позже.",
+      title: t("errView.server.title"),
+      hint: t("errView.server.hint"),
       icon: "🖥️",
       iconClass: "icon-server",
     };
@@ -490,16 +499,16 @@ function classifyError(statusCode, detail, humanMessage) {
     errorCode === "nesting_too_deep"
   ) {
     return {
-      title: "Ошибка валидации",
-      hint: "Проверьте правильность введённых данных.",
+      title: t("errView.validation.title"),
+      hint: t("errView.validation.hint"),
       icon: "✋",
       iconClass: "icon-validation",
     };
   }
 
   return {
-    title: "Произошла ошибка",
-    hint: "Попробуйте повторить действие или обратитесь в поддержку.",
+    title: t("errView.generic.title"),
+    hint: t("errView.generic.hint"),
     icon: "⚠",
     iconClass: "icon-unknown",
   };
@@ -518,12 +527,13 @@ export function showError(error, duration = 5000) {
   console.error("Original error:", error);
   const { statusCode, detail, rawMessage } = parseErrorStructure(error);
   const humanMessage =
-    extractHumanMessage(detail) || rawMessage || "Произошла ошибка";
+    extractHumanMessage(detail) || rawMessage || t("errView.generic.title");
 
   const { title, hint, icon, iconClass } = classifyError(
     statusCode,
     detail,
     humanMessage,
+    Boolean(error && error.isNetworkError),
   );
 
   const notification = $("error-notification");

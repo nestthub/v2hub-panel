@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="/static/styles/components-advanced.css" />
     <link rel="stylesheet" href="/static/styles/modals.css" />
     <link rel="stylesheet" href="/static/styles/mobile.css" />
+    <link rel="stylesheet" href="/static/styles/rtl.css" />
     <!-- styles -->
   </head>
 
@@ -44,6 +45,19 @@
         } catch (e) {
           document.body.classList.add("dark-theme");
         }
+        // Apply the saved language direction before first paint so RTL
+        // layouts (Persian) never flash as LTR. The full language
+        // resolution (Telegram / browser / admin default) happens in
+        // scripts/i18n once main.js runs.
+        try {
+          var lang = localStorage.getItem("v2hub_language");
+          if (lang) {
+            document.documentElement.setAttribute("lang", lang);
+            if (/^(fa|ar|he|ur)(-|$)/i.test(lang)) {
+              document.documentElement.setAttribute("dir", "rtl");
+            }
+          }
+        } catch (e) {}
       })();
     </script>
 
@@ -56,8 +70,10 @@
               type="button"
               id="brand-mark-btn"
               onclick="toggleAboutPopup()"
-              title="О приложении"
-              aria-label="О приложении"
+              data-i18n-title="about.title"
+              data-i18n-aria-label="about.title"
+              title="About"
+              aria-label="About"
             >
               v2
             </button>
@@ -90,7 +106,8 @@
                   href="https://t.me/v2hubot"
                   target="_blank"
                   rel="noopener"
-                  title="Telegram бот"
+                  data-i18n-title="about.bot"
+                  title="Telegram bot"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -108,7 +125,8 @@
                   href="https://t.me/nestt"
                   target="_blank"
                   rel="noopener"
-                  title="Разработчик"
+                  data-i18n-title="about.developer"
+                  title="Developer"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -134,7 +152,8 @@
               class="icon-btn primary"
               type="button"
               onclick="openSettings()"
-              title="Настройки"
+              data-i18n-title="settings.title"
+              title="Settings"
             >
               ⚙️
             </button>
@@ -144,7 +163,7 @@
               class="icon-btn primary"
               type="button"
               onclick="openConnectModal()"
-              title="Подключение"
+              title="Connection"
             >
               ⌁
             </button>
@@ -156,9 +175,11 @@
           <section class="panel screen active" id="screen-list">
             <div class="detail-head">
               <div>
-                <div class="detail-title">Подписки</div>
-                <div class="detail-subtitle">
-                  Управление источниками и подключениями
+                <div class="detail-title" data-i18n="list.title">
+                  Subscriptions
+                </div>
+                <div class="detail-subtitle" data-i18n="list.subtitle">
+                  Manage sources and connections
                 </div>
               </div>
             </div>
@@ -166,11 +187,15 @@
               <div class="stats-row">
                 <div class="stat">
                   <div class="stat-value" id="stat-subs">0</div>
-                  <div class="stat-label">Подписок</div>
+                  <div class="stat-label" data-i18n="list.statSubs">
+                    Subscriptions
+                  </div>
                 </div>
                 <div class="stat">
                   <div class="stat-value" id="stat-sources">0</div>
-                  <div class="stat-label">Конфигов</div>
+                  <div class="stat-label" data-i18n="list.statConfigs">
+                    Configs
+                  </div>
                 </div>
               </div>
               <div class="toolbar">
@@ -178,28 +203,31 @@
                   class="btn btn-secondary"
                   type="button"
                   onclick="reloadAll()"
+                  data-i18n="common.refresh"
                 >
-                  Обновить
+                  Refresh
                 </button>
                 <button
                   class="btn btn-primary"
                   type="button"
                   onclick="openCreateModal()"
+                  data-i18n="list.create"
                 >
-                  ＋ Создать
+                  ＋ Create
                 </button>
                 <button
                   class="btn btn-secondary"
                   type="button"
                   onclick="openProviders()"
+                  data-i18n="list.providers"
                 >
-                  Провайдеры
+                  Providers
                 </button>
               </div>
               <div class="list" id="subs-list"></div>
-              <div class="connect-banner">
-                Публичная ссылка, Base64 и QR-код доступны внутри выбранной
-                подписки.
+              <div class="connect-banner" data-i18n="list.banner">
+                Public link, Base64 and QR code are available inside the
+                selected subscription.
               </div>
             </div>
           </section>
@@ -209,7 +237,13 @@
             <div class="editor-shell">
               <div class="detail-head">
                 <div style="min-width: 0; flex: 1">
-                  <div class="detail-title" id="editor-title">Подписка</div>
+                  <div
+                    class="detail-title"
+                    id="editor-title"
+                    data-i18n="editor.defaultTitle"
+                  >
+                    Subscription
+                  </div>
                   <div class="detail-subtitle" id="editor-subtitle">
                     mini app
                   </div>
@@ -227,7 +261,8 @@
                     id="editor-provider-badge"
                     role="button"
                     tabindex="0"
-                    title="Показать статус подключения к провайдеру"
+                    data-i18n-title="editor.providerBadgeTitle"
+                    title="Show provider connection status"
                     onclick="openProviderConnectionModal()"
                     onkeydown="
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -241,7 +276,8 @@
                     type="button"
                     id="edit-sub-btn"
                     onclick="openEditSubModal()"
-                    title="Редактировать"
+                    data-i18n-title="common.edit"
+                    title="Edit"
                   >
                     ✎
                   </button>
@@ -250,7 +286,8 @@
                     type="button"
                     id="editor-menu-btn"
                     onclick="openEditorMenu(event)"
-                    title="Меню"
+                    data-i18n-title="common.menu"
+                    title="Menu"
                   >
                     ⋯
                   </button>
@@ -258,9 +295,10 @@
                     class="icon-btn"
                     type="button"
                     onclick="goBack()"
-                    title="Назад"
+                    data-i18n-title="common.back"
+                    title="Back"
                   >
-                    ‹
+                    <span class="rtl-flip">‹</span>
                   </button>
                 </div>
               </div>
@@ -270,24 +308,27 @@
                   type="button"
                   data-tab="sources"
                   onclick="switchTab('sources')"
+                  data-i18n="tab.sources"
                 >
-                  Источники
+                  Sources
                 </button>
                 <button
                   class="tab"
                   type="button"
                   data-tab="preview"
                   onclick="switchTab('preview')"
+                  data-i18n="tab.preview"
                 >
-                  Предпросмотр
+                  Preview
                 </button>
                 <button
                   class="tab tab-primary"
                   type="button"
                   data-tab="export"
                   onclick="switchTab('export')"
+                  data-i18n="tab.export"
                 >
-                  Подключение
+                  Connection
                 </button>
               </div>
               <div class="content tab-content" id="tab-sources">
@@ -297,20 +338,33 @@
                     type="button"
                     id="add-source-btn"
                     onclick="openAddSourceModal()"
+                    data-i18n="sources.add"
                   >
-                    ＋ Добавить источник
+                    ＋ Add source
                   </button>
-                  <div class="hint" id="sources-reorder-hint">
-                    Перетаскивай источники за ручку слева, чтобы менять порядок.
+                  <div
+                    class="hint"
+                    id="sources-reorder-hint"
+                    data-i18n="sources.reorderHint"
+                  >
+                    Drag sources by their handle to change the order.
                   </div>
-                  <div class="hint hidden" id="sources-readonly-hint">
-                    Источники предоставлены провайдером — доступно только
-                    копирование.
+                  <div
+                    class="hint hidden"
+                    id="sources-readonly-hint"
+                    data-i18n="sources.readonlyHint"
+                  >
+                    Sources are provided by the provider — copy only.
                   </div>
                 </div>
                 <div class="sources-list" id="sources-list"></div>
-                <div class="drag-hint" id="drag-hint" style="display: none">
-                  Перетащите источник для изменения порядка
+                <div
+                  class="drag-hint"
+                  id="drag-hint"
+                  style="display: none"
+                  data-i18n="sources.dragHint"
+                >
+                  Drag a source to change its order
                 </div>
               </div>
               <div
@@ -329,9 +383,11 @@
               >
                 <div class="export-grid">
                   <div class="export-block">
-                    <div class="export-label">Ссылка на подключение</div>
-                    <div class="export-desc">
-                      Скопируйте ссылку и вставьте в v2ray/v2bot/etc.
+                    <div class="export-label" data-i18n="export.linkLabel">
+                      Connection link
+                    </div>
+                    <div class="export-desc" data-i18n="export.linkDesc">
+                      Copy the link and paste it into v2ray/v2bot/etc.
                     </div>
                     <div class="export-box">
                       <div class="export-value" id="export-url">—</div>
@@ -362,22 +418,25 @@
                       class="btn btn-secondary"
                       type="button"
                       onclick="copyExportUrl()"
+                      data-i18n="export.copyLink"
                     >
-                      Копировать ссылку
+                      Copy link
                     </button>
                     <button
                       class="btn btn-primary"
                       type="button"
                       onclick="openQrModal()"
+                      data-i18n="export.qr"
                     >
-                      QR подписки
+                      Subscription QR
                     </button>
                     <button
                       class="btn btn-secondary"
                       type="button"
                       onclick="downloadBundle()"
+                      data-i18n="export.saveFile"
                     >
-                      Сохранить в файл
+                      Save to file
                     </button>
                   </div>
                 </div>
@@ -389,18 +448,21 @@
           <section class="panel screen" id="screen-providers">
             <div class="detail-head">
               <div>
-                <div class="detail-title">Провайдеры</div>
-                <div class="detail-subtitle">
-                  Ваши подключённые и ожидающие подтверждения провайдеры
+                <div class="detail-title" data-i18n="list.providers">
+                  Providers
+                </div>
+                <div class="detail-subtitle" data-i18n="providers.subtitle">
+                  Your connected and pending providers
                 </div>
               </div>
               <button
                 class="icon-btn"
                 type="button"
                 onclick="goBackToList()"
-                title="Назад"
+                data-i18n-title="common.back"
+                title="Back"
               >
-                ‹
+                <span class="rtl-flip">‹</span>
               </button>
             </div>
 
@@ -418,11 +480,17 @@
         class="btn btn-secondary"
         type="button"
         onclick="discardChanges()"
+        data-i18n="savebar.discard"
       >
-        Отменить
+        Cancel
       </button>
-      <button class="btn btn-primary" type="button" onclick="saveChanges()">
-        Сохранить изменения
+      <button
+        class="btn btn-primary"
+        type="button"
+        onclick="saveChanges()"
+        data-i18n="savebar.save"
+      >
+        Save changes
       </button>
     </div>
 
@@ -437,12 +505,17 @@
         >
           ✕
         </button>
-        <div class="modal-title">Подключение к v2hub API</div>
+        <div class="modal-title" data-i18n="connect.modalTitle">
+          Connect to v2hub API
+        </div>
         <div class="input-group" id="url-input-group">
           <label class="input-label">
             Base URL
-            <span class="fixed-badge hidden" id="url-fixed-badge"
-              >зафиксировано</span
+            <span
+              class="fixed-badge hidden"
+              id="url-fixed-badge"
+              data-i18n="connect.fixed"
+              >fixed</span
             >
           </label>
           <input
@@ -454,12 +527,13 @@
           />
         </div>
         <div class="input-group">
-          <label class="input-label">API токен</label>
+          <label class="input-label" data-i18n="connect.token">API token</label>
           <input
             class="input-field"
             id="connect-api-token"
             type="password"
-            placeholder="Введите токен"
+            data-i18n-placeholder="connect.tokenPlaceholder"
+            placeholder="Enter token"
             autocomplete="off"
           />
           <a
@@ -467,15 +541,26 @@
             href="https://t.me/v2hubot?start=token"
             target="_blank"
             rel="noopener"
-            >Нет токена?</a
+            data-i18n="connect.noToken"
+            >No token?</a
           >
         </div>
         <div class="modal-footer" style="margin-top: 4px">
-          <button class="btn btn-ghost" type="button" onclick="disconnect()">
-            Сбросить
+          <button
+            class="btn btn-ghost"
+            type="button"
+            onclick="disconnect()"
+            data-i18n="connect.reset"
+          >
+            Reset
           </button>
-          <button class="btn btn-primary" type="button" onclick="connect()">
-            Подключиться
+          <button
+            class="btn btn-primary"
+            type="button"
+            onclick="connect()"
+            data-i18n="connect.connect"
+          >
+            Connect
           </button>
         </div>
       </div>
@@ -492,7 +577,9 @@
         >
           ✕
         </button>
-        <div class="modal-title">Подключение к провайдеру</div>
+        <div class="modal-title" data-i18n="providerConn.modalTitle">
+          Provider connection
+        </div>
         <div id="provider-connection-body"></div>
       </div>
     </div>
@@ -508,17 +595,26 @@
         >
           ✕
         </button>
-        <div class="modal-title">Добавить источник</div>
+        <div class="modal-title" data-i18n="addSource.title">Add source</div>
 
         <div class="source-row-list" id="add-source-rows"></div>
 
-        <button class="add-row-btn" type="button" onclick="addSourceRow()">
-          + Добавить ещё строку
+        <button
+          class="add-row-btn"
+          type="button"
+          onclick="addSourceRow()"
+          data-i18n="addSource.addRow"
+        >
+          + Add another row
         </button>
 
-        <div class="input-hint" style="margin-top: 6px; margin-bottom: 14px">
-          Поддерживаются: vless://, vmess://, ss://, trojan:// и другие. Также
-          можно добавить другие подписки
+        <div
+          class="input-hint"
+          style="margin-top: 6px; margin-bottom: 14px"
+          data-i18n="addSource.hint"
+        >
+          Supported: vless://, vmess://, ss://, trojan:// and others. You can
+          also add other subscriptions
         </div>
 
         <button
@@ -526,7 +622,8 @@
           type="button"
           onclick="addSource()"
         >
-          Добавить источник<span id="add-source-count"></span>
+          <span data-i18n="addSource.submit">Add source</span
+          ><span id="add-source-count"></span>
         </button>
       </div>
     </div>
@@ -542,9 +639,11 @@
         >
           ✕
         </button>
-        <div class="modal-title">Создать подписку</div>
+        <div class="modal-title" data-i18n="create.title">
+          Create subscription
+        </div>
         <div class="input-group">
-          <label class="input-label">Название</label>
+          <label class="input-label" data-i18n="common.name">Name</label>
           <input
             class="input-field"
             id="create-name"
@@ -553,10 +652,14 @@
             maxlength="64"
             autocomplete="off"
           />
-          <div class="input-hint">Имя, которое видите только вы</div>
+          <div class="input-hint" data-i18n="create.nameHint">
+            A name only you can see
+          </div>
         </div>
         <div class="input-group">
-          <label class="input-label">Описание (необязательно)</label>
+          <label class="input-label" data-i18n="create.desc"
+            >Description (optional)</label
+          >
           <input
             class="input-field"
             id="create-desc"
@@ -565,20 +668,23 @@
             maxlength="255"
             autocomplete="off"
           />
-          <div class="input-hint">
-            Название подписки, которое будет отображаться в конечном приложении.
+          <div class="input-hint" data-i18n="create.descHint">
+            Subscription name shown in the end-user app.
           </div>
         </div>
 
         <div class="input-group">
-          <label class="input-label">Начальные источники (необязательно)</label>
+          <label class="input-label" data-i18n="create.initial"
+            >Initial sources (optional)</label
+          >
           <div class="source-row-list" id="create-source-rows"></div>
           <button
             class="add-row-btn"
             type="button"
             onclick="addCreateSourceRow()"
+            data-i18n="addSource.addRow"
           >
-            + Добавить ещё строку
+            + Add another row
           </button>
         </div>
 
@@ -586,8 +692,9 @@
           class="btn btn-primary btn-full"
           type="button"
           onclick="createSubscription()"
+          data-i18n="create.submit"
         >
-          Создать
+          Create
         </button>
       </div>
     </div>
@@ -605,10 +712,10 @@
           ✕
         </button>
 
-        <div class="modal-title">Редактировать подписку</div>
+        <div class="modal-title" data-i18n="edit.title">Edit subscription</div>
 
         <div class="input-group">
-          <label class="input-label">Название</label>
+          <label class="input-label" data-i18n="common.name">Name</label>
           <input
             class="input-field"
             id="edit-sub-name"
@@ -619,7 +726,9 @@
         </div>
 
         <div class="input-group">
-          <label class="input-label">Описание (видно в приложениях)</label>
+          <label class="input-label" data-i18n="edit.desc"
+            >Description (shown in apps)</label
+          >
           <input
             class="input-field"
             id="edit-sub-desc"
@@ -631,8 +740,13 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-primary" type="button" onclick="saveSubEdit()">
-            Сохранить
+          <button
+            class="btn btn-primary"
+            type="button"
+            onclick="saveSubEdit()"
+            data-i18n="common.save"
+          >
+            Save
           </button>
 
           <button
@@ -640,7 +754,7 @@
             type="button"
             onclick="deleteSubConfirm()"
           >
-            🗑 Удалить
+            🗑 <span data-i18n="common.delete">Delete</span>
           </button>
         </div>
       </div>
@@ -659,12 +773,18 @@
           ✕
         </button>
 
-        <div class="modal-title" id="source-settings-title">
-          Редактировать конфиг
+        <div
+          class="modal-title"
+          id="source-settings-title"
+          data-i18n="sourceEdit.title"
+        >
+          Edit config
         </div>
 
         <div class="input-group" id="source-comment-group">
-          <label class="input-label">Комментарий</label>
+          <label class="input-label" data-i18n="sourceEdit.comment"
+            >Comment</label
+          >
 
           <input
             class="input-field"
@@ -672,19 +792,27 @@
             type="text"
             maxlength="255"
             autocomplete="off"
-            placeholder="Введите комментарий"
+            data-i18n-placeholder="sourceEdit.commentPlaceholder"
+            placeholder="Enter a comment"
           />
 
-          <div class="input-hint" id="source-comment-hint">
-            Отображается только в интерфейсе
+          <div
+            class="input-hint"
+            id="source-comment-hint"
+            data-i18n="sourceEdit.commentHint"
+          >
+            Shown in the interface only
           </div>
         </div>
 
         <div class="setting-row">
           <div class="setting-row-text">
-            <div class="setting-row-title">Скрыт от пользователей</div>
-            <div class="setting-row-hint">
-              Источник останется в подписке, но не попадёт в резолв
+            <div class="setting-row-title" data-i18n="sourceEdit.hidden">
+              Hidden from users
+            </div>
+            <div class="setting-row-hint" data-i18n="sourceEdit.hiddenHint">
+              The source stays in the subscription but is excluded from
+              resolution
             </div>
           </div>
           <button
@@ -702,7 +830,7 @@
           id="source-advanced-toggle"
           onclick="toggleSourceAdvanced()"
         >
-          <span>Расширенные настройки</span>
+          <span data-i18n="advanced.title">Advanced settings</span>
           <span class="advanced-toggle-chevron">▾</span>
         </div>
 
@@ -710,9 +838,11 @@
           <div class="advanced-body-inner">
             <div class="setting-row">
               <div class="setting-row-text">
-                <div class="setting-row-title">Глубина вложенности</div>
-                <div class="setting-row-hint">
-                  Сколько уровней вложенных подписок разрешено (0–3)
+                <div class="setting-row-title" data-i18n="sourceEdit.depth">
+                  Nesting depth
+                </div>
+                <div class="setting-row-hint" data-i18n="sourceEdit.depthHint">
+                  How many levels of nested subscriptions are allowed (0–3)
                 </div>
               </div>
               <div class="depth-stepper">
@@ -744,8 +874,9 @@
           class="btn btn-primary btn-full"
           type="button"
           onclick="saveSourceComment()"
+          data-i18n="common.save"
         >
-          Сохранить
+          Save
         </button>
       </div>
     </div>
@@ -763,7 +894,7 @@
           ✕
         </button>
 
-        <div class="modal-title">QR подписки</div>
+        <div class="modal-title" data-i18n="export.qr">Subscription QR</div>
 
         <div class="qr-card">
           <div class="qr-card-inner">
@@ -773,7 +904,9 @@
               class="qr-image"
             />
           </div>
-          <div class="qr-caption">Отсканируйте для подключения к подписке</div>
+          <div class="qr-caption" data-i18n="qr.caption">
+            Scan to connect to the subscription
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -781,12 +914,18 @@
             class="btn btn-secondary"
             type="button"
             onclick="copyExportUrl()"
+            data-i18n="export.copyLink"
           >
-            Копировать ссылку
+            Copy link
           </button>
 
-          <button class="btn btn-primary" type="button" onclick="downloadQr()">
-            Скачать QR
+          <button
+            class="btn btn-primary"
+            type="button"
+            onclick="downloadQr()"
+            data-i18n="qr.download"
+          >
+            Download QR
           </button>
         </div>
       </div>
@@ -795,7 +934,7 @@
     <!-- Context Menus -->
     <div class="ctx-menu" id="ctx-menu">
       <div class="ctx-menu-item" onclick="copySourceFromCtx()">
-        📋 Копировать
+        📋 <span data-i18n="ctx.copy">Copy</span>
       </div>
 
       <div
@@ -803,11 +942,14 @@
         id="ctx-edit-comment"
         onclick="editSourceCommentFromCtx()"
       >
-        ✏️ <span id="ctx-edit-comment-label">Редактировать конфиг</span>
+        ✏️
+        <span id="ctx-edit-comment-label" data-i18n="sourceEdit.title"
+          >Edit config</span
+        >
       </div>
 
       <div class="ctx-menu-item" onclick="deleteSourceFromCtx()">
-        🗑 Удалить источник
+        🗑 <span data-i18n="ctx.deleteSource">Delete source</span>
       </div>
     </div>
 
@@ -820,7 +962,7 @@
           closeEditorMenu();
         "
       >
-        ✎ Редактировать подписку
+        ✎ <span data-i18n="editorMenu.edit">Edit subscription</span>
       </div>
       <div
         class="editor-menu-item"
@@ -829,7 +971,7 @@
           closeEditorMenu();
         "
       >
-        ↻ Обновить данные
+        ↻ <span data-i18n="editorMenu.refresh">Refresh data</span>
       </div>
       <div class="editor-divider" id="editor-menu-danger-divider"></div>
       <div
@@ -840,7 +982,7 @@
           closeEditorMenu();
         "
       >
-        🗑 Удалить подписку
+        🗑 <span data-i18n="editorMenu.delete">Delete subscription</span>
       </div>
     </div>
 
@@ -857,7 +999,13 @@
       <div class="error-notification-inner">
         <div class="error-notification-icon" id="error-icon">⚠</div>
         <div class="error-notification-body">
-          <div class="error-notification-title" id="error-title">Ошибка</div>
+          <div
+            class="error-notification-title"
+            id="error-title"
+            data-i18n="error.title"
+          >
+            Error
+          </div>
           <div class="error-notification-message" id="error-message"></div>
           <div class="error-notification-hint" id="error-hint"></div>
         </div>
@@ -869,7 +1017,8 @@
               .getElementById('error-notification')
               .classList.remove('show')
           "
-          aria-label="Закрыть"
+          data-i18n-aria-label="common.close"
+          aria-label="Close"
         >
           ✕
         </button>

@@ -63,3 +63,41 @@ def test_admin_settings_list(service):
     assert len(theme_setting["options"]) == 2
     option_values = {opt["value"] for opt in theme_setting["options"]}
     assert option_values == {"dark", "light"}
+
+
+def test_default_language_is_english(service):
+    assert service.get_public_settings()["default_language"] == "en"
+    assert service.get_setting("default_language") == "en"
+
+
+@pytest.mark.parametrize(
+    ("raw", "canonical"),
+    [
+        ("ru", "ru"),
+        ("FA", "fa"),
+        ("zh-CN", "zh-CN"),
+        ("zh-cn", "zh-CN"),
+        ("zh_CN", "zh-CN"),
+        (" en ", "en"),
+    ],
+)
+def test_update_default_language_normalizes(service, raw, canonical):
+    result = service.update_setting("default_language", raw)
+    assert result["value"] == canonical
+    assert service.get_public_settings()["default_language"] == canonical
+
+
+def test_update_default_language_invalid(service):
+    with pytest.raises(ValueError, match="Language must be one of"):
+        service.update_setting("default_language", "xx")
+
+    with pytest.raises(ValueError, match="cannot be empty"):
+        service.update_setting("default_language", "  ")
+
+
+def test_admin_settings_list_has_languages(service):
+    items = service.get_all_settings_admin()
+    lang = next(item for item in items if item["key"] == "default_language")
+    assert lang["type"] == "select"
+    assert lang["value"] == "en"
+    assert {opt["value"] for opt in lang["options"]} == {"en", "ru", "fa", "zh-CN"}

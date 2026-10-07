@@ -99,7 +99,12 @@ class SettingsService:
             if not valid:
                 raise ValueError(err_msg or "Invalid setting value")
 
-        val_str = str(value).strip().lower() if isinstance(value, str) else str(value)
+        if defn.normalizer:
+            val_str = defn.normalizer(value)
+        elif isinstance(value, str):
+            val_str = value.strip().lower()
+        else:
+            val_str = str(value)
         self.storage.set_setting(target_key, val_str, defn.type)
         return {
             "key": target_key,

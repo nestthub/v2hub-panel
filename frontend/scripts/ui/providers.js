@@ -17,15 +17,16 @@ import {
   resolveConnectionUiState,
   openConnectionModalFor,
 } from "./provider-connections.js";
+import { t } from "../i18n/index.js";
 
 function statusLabel(uiState) {
   switch (uiState) {
     case "approved":
-      return "Подключено";
+      return t("status.approved");
     case "pending":
-      return "Ожидает подтверждения";
+      return t("status.pending");
     default:
-      return "Неизвестно";
+      return t("status.unknown");
   }
 }
 
@@ -38,7 +39,7 @@ function buildProviderRow(connection) {
   });
   card.setAttribute(
     "aria-label",
-    `Информация о провайдере ${connection.provider_name}`,
+    t("provider.infoAria", { name: connection.provider_name }),
   );
   card.addEventListener("click", () =>
     openConnectionModalFor(connection.provider_name),
@@ -53,7 +54,7 @@ function buildProviderRow(connection) {
     <div class="sub-desc">${
       connection.provider_url
         ? escapeHtml(connection.provider_url)
-        : "Без адреса"
+        : escapeHtml(t("providers.noAddress"))
     }</div>
   `;
 
@@ -73,11 +74,11 @@ function renderEmpty(list, isConnected) {
   const empty = createElement("div", { class: "empty" });
   empty.innerHTML = isConnected
     ? `<div class="empty-icon">🛰️</div>
-       <div class="empty-title">Нет провайдеров</div>
-       <div class="empty-sub">Провайдеры появятся здесь, как только у вас будет хотя бы одно подключение</div>`
+       <div class="empty-title">${escapeHtml(t("providers.emptyTitle"))}</div>
+       <div class="empty-sub">${escapeHtml(t("providers.emptySub"))}</div>`
     : `<div class="empty-icon">🔌</div>
-       <div class="empty-title">Нет подключения</div>
-       <div class="empty-sub">Укажите API-адрес и токен, чтобы увидеть своих провайдеров</div>`;
+       <div class="empty-title">${escapeHtml(t("conn.emptyTitle"))}</div>
+       <div class="empty-sub">${escapeHtml(t("providers.emptySubNoConn"))}</div>`;
   list.appendChild(empty);
 }
 
@@ -85,18 +86,17 @@ function renderLoading(list) {
   list.innerHTML = `
     <div class="loading-state">
       <span class="spinner"></span>
-      <div>Загрузка провайдеров…</div>
+      <div>${escapeHtml(t("providers.loading"))}</div>
     </div>
   `;
 }
 
 function renderError(list, error) {
-  const message =
-    (error && error.message) || "Не удалось загрузить список провайдеров.";
+  const message = (error && error.message) || t("providers.loadError");
   list.innerHTML = `
     <div class="empty">
       <div class="empty-icon">⚠️</div>
-      <div class="empty-title">Ошибка</div>
+      <div class="empty-title">${escapeHtml(t("error.title"))}</div>
       <div class="empty-sub">${escapeHtml(message)}</div>
     </div>
   `;

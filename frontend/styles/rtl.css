@@ -1,0 +1,45 @@
+/* =====================================
+   RTL support (Persian and other right-to-left locales)
+
+   The document direction is set by scripts/i18n (<html dir="rtl">).
+   Most of the layout uses logical properties (margin-inline-*,
+   inset-inline-*, text-align: start/end) and flips automatically;
+   this file only holds what logical properties cannot express.
+===================================== */
+
+/* System fonts with Arabic-script coverage (no external font loading) */
+:root[dir="rtl"] body {
+  font-family:
+    "Vazirmatn",
+    "Segoe UI",
+    Tahoma,
+    "Noto Sans Arabic",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+/* Directional glyphs (‹ ›) point the other way in RTL */
+:root[dir="rtl"] .chevron,
+:root[dir="rtl"] .rtl-flip {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+/* Toggle knob travels towards the opposite edge */
+:root[dir="rtl"] .toggle-switch.on::after {
+  transform: translateX(-18px);
+}
+
+/* Technical content (URLs, tokens, configs, vless://…) is always LTR */
+:root[dir="rtl"] .source-data,
+:root[dir="rtl"] .source-row-input,
+:root[dir="rtl"] .export-value,
+:root[dir="rtl"] .preview-text,
+:root[dir="rtl"] .provider-conn-link,
+:root[dir="rtl"] #connect-base-url,
+:root[dir="rtl"] #connect-api-token,
+:root[dir="rtl"] .modal textarea {
+  direction: ltr;
+  text-align: left;
+}

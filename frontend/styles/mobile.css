@@ -335,7 +335,7 @@ body {
     justify-content: flex-end;
     gap: 6px;
     margin-top: 6px;
-    margin-left: 0;
+    margin-inline-start: 0;
     min-width: 0;
     flex-wrap: wrap;
   }

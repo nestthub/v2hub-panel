@@ -1,3 +1,5 @@
+import { t } from "../i18n/index.js";
+
 /**
  * Helper utilities
  */
@@ -299,7 +301,7 @@ export function extractComment(config) {
  */
 export function validateBaseUrl(url) {
   if (!url || typeof url !== "string") {
-    return { ok: false, error: "Укажите API URL." };
+    return { ok: false, error: t("validate.urlRequired") };
   }
 
   const trimmed = url.trim();
@@ -309,14 +311,14 @@ export function validateBaseUrl(url) {
     !trimmed.startsWith("https://") &&
     !trimmed.startsWith("http://localhost")
   ) {
-    return { ok: false, error: "API URL должен начинаться с https://." };
+    return { ok: false, error: t("validate.urlHttps") };
   }
 
   let parsed;
   try {
     parsed = new URL(trimmed);
   } catch {
-    return { ok: false, error: "Некорректный формат URL." };
+    return { ok: false, error: t("validate.urlFormat") };
   }
 
   const hostname = parsed.hostname.toLowerCase();
@@ -338,7 +340,7 @@ export function validateBaseUrl(url) {
   if (hostname !== "localhost") {
     for (const pattern of blocked) {
       if (pattern.test(hostname)) {
-        return { ok: false, error: "Недопустимый адрес сервера." };
+        return { ok: false, error: t("validate.urlHost") };
       }
     }
   }
@@ -350,7 +352,7 @@ export function validateBaseUrl(url) {
   ) {
     return {
       ok: false,
-      error: "Недопустимая схема URL. Используйте https://.",
+      error: t("validate.urlScheme"),
     };
   }
 

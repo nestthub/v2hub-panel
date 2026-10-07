@@ -18,6 +18,7 @@ import { $, createElement, clearChildren } from "../utils/dom.js";
 import { escapeHtml } from "../utils/helpers.js";
 import { showToast, showError } from "./toast.js";
 import { openModal, closeModal } from "./modals.js";
+import { t } from "../i18n/index.js";
 
 // ---------------------------------------------------------------------------
 // Small pure helpers (unit-testable, no DOM)
@@ -133,7 +134,7 @@ function renderModalLoading(providerName) {
   body.innerHTML = `
     <div class="loading-state">
       <span class="spinner"></span>
-      <div>Загрузка данных о ${escapeHtml(providerName)}…</div>
+      <div>${escapeHtml(t("providerConn.loading", { name: providerName }))}</div>
     </div>
   `;
 }
@@ -142,13 +143,12 @@ function renderModalError(providerName, error) {
   const body = modalBody();
   if (!body) return;
 
-  const message =
-    (error && error.message) || "Не удалось загрузить данные о подключении.";
+  const message = (error && error.message) || t("providerConn.loadError");
 
   body.innerHTML = `
     <div class="empty">
       <div class="empty-icon">⚠️</div>
-      <div class="empty-title">Ошибка</div>
+      <div class="empty-title">${escapeHtml(t("error.title"))}</div>
       <div class="empty-sub">${escapeHtml(message)}</div>
     </div>
   `;
@@ -157,7 +157,7 @@ function renderModalError(providerName, error) {
   const retryBtn = createElement(
     "button",
     { class: "btn btn-secondary", type: "button" },
-    "Повторить",
+    t("common.retry"),
   );
   retryBtn.addEventListener("click", () => loadAndShowConnection(providerName));
   footer.appendChild(retryBtn);
@@ -186,7 +186,7 @@ function renderModalContent(connection) {
         type: "button",
         id: "provider-conn-disconnect-btn",
       },
-      "Отключить",
+      t("providerConn.disconnect"),
     );
     disconnectBtn.addEventListener("click", () =>
       handleRevoke(connection.provider_name, disconnectBtn),
@@ -200,7 +200,7 @@ function renderModalContent(connection) {
         type: "button",
         id: "provider-conn-approve-btn",
       },
-      "Одобрить",
+      t("providerConn.approve"),
     );
     const rejectBtn = createElement(
       "button",
@@ -209,7 +209,7 @@ function renderModalContent(connection) {
         type: "button",
         id: "provider-conn-reject-btn",
       },
-      "Отклонить",
+      t("providerConn.reject"),
     );
     approveBtn.addEventListener("click", () =>
       handleApprove(connection.provider_name, [approveBtn, rejectBtn]),
@@ -232,11 +232,11 @@ function renderModalContent(connection) {
 function statusLabel(uiState) {
   switch (uiState) {
     case "approved":
-      return "Подключено";
+      return t("status.approved");
     case "pending":
-      return "Ожидает подтверждения";
+      return t("status.pending");
     default:
-      return "Неизвестно";
+      return t("status.unknown");
   }
 }
 
@@ -264,7 +264,7 @@ function buildConnectionInfoBlock(connection, uiState) {
     const urlRow = createElement("div", { class: "provider-conn-row" });
     const safeUrl = escapeHtml(connection.provider_url);
     urlRow.innerHTML = `
-      <span class="provider-conn-label">Адрес</span>
+      <span class="provider-conn-label">${escapeHtml(t("providerConn.address"))}</span>
       <a class="provider-conn-value provider-conn-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>
     `;
     details.appendChild(urlRow);
@@ -329,7 +329,7 @@ async function handleApprove(providerName, buttons) {
     providerName,
     buttons,
     () => API.approveConnection(providerName),
-    `Провайдер «${providerName}» подключён`,
+    t("providerConn.approved", { name: providerName }),
     "approve",
   );
 }
@@ -339,7 +339,7 @@ async function handleReject(providerName, buttons) {
     providerName,
     buttons,
     () => API.rejectConnection(providerName),
-    `Заявка от «${providerName}» отклонена`,
+    t("providerConn.rejected", { name: providerName }),
     "reject",
   );
 }
@@ -349,7 +349,7 @@ async function handleRevoke(providerName, button) {
     providerName,
     [button],
     () => API.revokeConnection(providerName),
-    `Подключение к «${providerName}» отключено`,
+    t("providerConn.revoked", { name: providerName }),
     "revoke",
   );
 }

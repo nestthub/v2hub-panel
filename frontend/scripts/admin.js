@@ -2,7 +2,19 @@
  * Admin panel settings management
  */
 
+import {
+  t,
+  getLanguage,
+  getSupportedLanguages,
+  initLanguage,
+  setLanguage,
+  applyTranslations,
+  applyServerDefaultLanguage,
+  onLanguageChange,
+} from "./i18n/index.js";
+
 let currentSettings = [];
+let loginErrorKey = null; // translation key of the error shown on the login card
 
 function getRequestHeaders() {
   return { "Content-Type": "application/json" };
@@ -32,7 +44,8 @@ async function loginAdmin(secret) {
   });
   const data = await res.json();
   if (!res.ok) {
-    const msg = data.detail?.message || data.detail || "Authentication failed";
+    const msg =
+      data.detail?.message || data.detail || t("admin.err.authFailed");
     throw new Error(msg);
   }
   return data;
@@ -49,7 +62,7 @@ async function fetchAdminSettings() {
   const res = await fetch("/api/admin/settings", {
     headers: getRequestHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to load settings");
+  if (!res.ok) throw new Error(t("admin.err.loadSettings"));
   return await res.json();
 }
 
@@ -61,7 +74,8 @@ async function saveSetting(key, value) {
   });
   const data = await res.json();
   if (!res.ok) {
-    const msg = data.detail?.message || data.detail || "Failed to save setting";
+    const msg =
+      data.detail?.message || data.detail || t("admin.err.saveFailed");
     throw new Error(msg);
   }
   return data;
@@ -81,8 +95,8 @@ function setView(authenticated, adminConfigured = true) {
     dashboardSection.classList.add("hidden");
     logoutBtn.classList.add("hidden");
     const err = document.getElementById("login-error");
-    err.textContent =
-      "Admin access is not configured. Please set V2HUB_ADMIN_PANEL_PASSWORD in server environment.";
+    loginErrorKey = "admin.err.notConfigured";
+    err.textContent = t(loginErrorKey);
     err.classList.remove("hidden");
     return;
   }
@@ -98,6 +112,23 @@ function setView(authenticated, adminConfigured = true) {
   }
 }
 
+// Flag icons for the "default_language" options.
+const LANGUAGE_FLAGS = { en: "🇬🇧", ru: "🇷🇺", fa: "🇮🇷", "zh-CN": "🇨🇳" };
+
+function optionIcon(settingKey, value) {
+  if (settingKey === "default_language") return LANGUAGE_FLAGS[value] || "🌐";
+  return value === "light" ? "☀️" : "🌙";
+}
+
+/**
+ * Backend-provided label/description are English fallbacks; the admin UI
+ * shows the translated text when the locale has one for this setting/option.
+ */
+function tr(key, fallback, params) {
+  const text = t(key, params);
+  return text === key ? fallback : text;
+}
+
 function renderSettings(settingsList) {
   const container = document.getElementById("settings-container");
   if (!container) return;
@@ -109,19 +140,24 @@ function renderSettings(settingsList) {
 
     const titleEl = document.createElement("div");
     titleEl.className = "admin-card-title";
-    titleEl.textContent = `⚙️ ${setting.label}`;
+    const label = tr(`admin.setting.${setting.key}.label`, setting.label);
+    titleEl.textContent = `⚙️ ${label}`;
     card.appendChild(titleEl);
 
     const descEl = document.createElement("div");
     descEl.className = "admin-card-desc";
-    descEl.textContent = setting.description;
+    descEl.textContent = tr(
+      `admin.setting.${setting.key}.description`,
+      setting.description,
+    );
     card.appendChild(descEl);
 
     let selectedValue = setting.value || setting.default;
 
     if (setting.type === "select" && Array.isArray(setting.options)) {
       const grid = document.createElement("div");
-      grid.className = "theme-grid";
+      // 2 options per row; 9 or more options: 3 per row.
+      grid.className = `theme-grid ${setting.options.length >= 9 ? "cols-3" : "cols-2"}`;
 
       setting.options.forEach((opt) => {
         const optCard = document.createElement("div");
@@ -129,18 +165,28 @@ function renderSettings(settingsList) {
 
         const iconEl = document.createElement("div");
         iconEl.className = "theme-icon";
-        iconEl.textContent = opt.value === "light" ? "☀️" : "🌙";
+        iconEl.textContent = optionIcon(setting.key, opt.value);
         optCard.appendChild(iconEl);
 
         const nameEl = document.createElement("div");
         nameEl.className = "theme-name";
-        nameEl.textContent = opt.label;
+        // Language options keep their native names (e.g. "Русский").
+        nameEl.textContent =
+          setting.key === "default_language"
+            ? opt.label
+            : tr(`admin.option.${setting.key}.${opt.value}.label`, opt.label);
         optCard.appendChild(nameEl);
 
         if (opt.description) {
           const optDescEl = document.createElement("div");
           optDescEl.className = "theme-desc";
-          optDescEl.textContent = opt.description;
+          optDescEl.textContent =
+            setting.key === "default_language"
+              ? opt.description
+              : tr(
+                  `admin.option.${setting.key}.${opt.value}.description`,
+                  opt.description,
+                );
           optCard.appendChild(optDescEl);
         }
 
@@ -164,25 +210,25 @@ function renderSettings(settingsList) {
     const saveBtn = document.createElement("button");
     saveBtn.type = "button";
     saveBtn.className = "btn-primary";
-    saveBtn.textContent = `Save ${setting.label}`;
+    saveBtn.textContent = t("admin.save", { label });
 
     const statusEl = document.createElement("span");
     statusEl.className = "status-indicator";
 
     saveBtn.addEventListener("click", async () => {
       saveBtn.disabled = true;
-      statusEl.textContent = "Saving...";
+      statusEl.textContent = t("admin.saving");
       statusEl.className = "status-indicator";
 
       try {
         await saveSetting(setting.key, selectedValue);
-        statusEl.textContent = "Saved successfully!";
+        statusEl.textContent = t("admin.saved");
         statusEl.className = "status-indicator success";
         setTimeout(() => {
           statusEl.textContent = "";
         }, 4000);
       } catch (err) {
-        statusEl.textContent = `Error: ${err.message}`;
+        statusEl.textContent = t("admin.error", { message: err.message });
         statusEl.className = "status-indicator error";
       } finally {
         saveBtn.disabled = false;
@@ -201,7 +247,52 @@ function renderSettings(settingsList) {
 // Initialization
 // ---------------------------------------------------------------------------
 
+/** Fill the header language picker; an explicit choice is saved. */
+function setupLanguagePicker() {
+  const select = document.getElementById("admin-language-select");
+  if (!select) return;
+  for (const lang of getSupportedLanguages()) {
+    const opt = document.createElement("option");
+    opt.value = lang.code;
+    opt.textContent = `${lang.flag ? lang.flag + " " : ""}${lang.name}`;
+    select.appendChild(opt);
+  }
+  select.value = getLanguage();
+  select.addEventListener("change", () => {
+    setLanguage(select.value, { persist: true });
+  });
+  onLanguageChange((code) => {
+    select.value = code;
+    // Re-render pieces built from JS strings.
+    if (loginErrorKey) {
+      const err = document.getElementById("login-error");
+      if (err && !err.classList.contains("hidden")) {
+        err.textContent = t(loginErrorKey);
+      }
+    }
+    if (currentSettings.length) renderSettings(currentSettings);
+  });
+}
+
+/** Panel-wide default language (public setting), lowest-priority source. */
+async function applyPanelDefaultLanguage() {
+  try {
+    const res = await fetch("/api/settings/public");
+    if (!res.ok) return;
+    const data = await res.json();
+    applyServerDefaultLanguage(data.default_language);
+  } catch {
+    /* keep the detected/English language */
+  }
+}
+
 async function init() {
+  // Same resolution as the main app: saved > browser > admin default > en.
+  initLanguage();
+  applyTranslations(document);
+  setupLanguagePicker();
+  await applyPanelDefaultLanguage();
+
   const status = await checkStatus();
   setView(status.authenticated, status.admin_configured);
 
@@ -225,6 +316,7 @@ async function init() {
       setView(true, true);
       await loadSettingsData();
     } catch (err) {
+      loginErrorKey = null; // server-provided text: not re-translated
       loginError.textContent = err.message;
       loginError.classList.remove("hidden");
     }

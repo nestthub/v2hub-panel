@@ -4,6 +4,13 @@
 
 import { $ } from "../utils/dom.js";
 import { openModal, closeModal } from "./modals.js";
+import {
+  t,
+  getLanguage,
+  getSupportedLanguages,
+  setLanguage,
+  applyTranslations,
+} from "../i18n/index.js";
 
 // Current theme state
 let currentTheme = "dark";
@@ -25,6 +32,9 @@ export function openSettings() {
   if (toggle) {
     toggle.classList.toggle("on", currentTheme === "dark");
   }
+
+  const langSelect = $("language-select");
+  if (langSelect) langSelect.value = getLanguage();
 
   openModal("modal-settings");
 }
@@ -129,6 +139,7 @@ function createSettingsModal() {
         class="modal-close"
         type="button"
         onclick="closeSettings()"
+        data-i18n-aria-label="settings.close"
         aria-label="Close settings"
       >
         ✕
@@ -137,7 +148,7 @@ function createSettingsModal() {
 
 
       <div class="modal-title">
-        ⚙️ Настройки
+        ⚙️ <span data-i18n="settings.title">Settings</span>
       </div>
 
 
@@ -148,13 +159,13 @@ function createSettingsModal() {
         <div class="setting-row-text">
 
 
-          <div class="setting-row-title">
-            Темная тема
+          <div class="setting-row-title" data-i18n="settings.darkTheme">
+            Dark theme
           </div>
 
 
-          <div class="setting-row-hint">
-            Выбирайте тему, которая вам по душе. (Светлая тема может содержать ошибки с палитрой)
+          <div class="setting-row-hint" data-i18n="settings.darkThemeHint">
+            Pick the theme you like. (The light theme may have palette issues)
           </div>
 
 
@@ -180,9 +191,45 @@ function createSettingsModal() {
       </div>
 
 
+      <div class="setting-row">
+
+        <div class="setting-row-text">
+          <div class="setting-row-title" data-i18n="settings.language">
+            Language
+          </div>
+          <div class="setting-row-hint" data-i18n="settings.languageHint">
+            Interface language
+          </div>
+        </div>
+
+        <select
+          id="language-select"
+          class="language-select"
+          data-i18n-aria-label="settings.language"
+          aria-label="Language"
+        ></select>
+
+      </div>
+
+
     </div>
 
   `;
+
+  const select = modal.querySelector("#language-select");
+  for (const lang of getSupportedLanguages()) {
+    const opt = document.createElement("option");
+    opt.value = lang.code;
+    opt.textContent = `${lang.flag ? lang.flag + " " : ""}${lang.name}`;
+    select.appendChild(opt);
+  }
+  select.value = getLanguage();
+  // An explicit choice is persisted and wins over auto-detection afterwards.
+  select.addEventListener("change", () => {
+    setLanguage(select.value, { persist: true });
+  });
+
+  applyTranslations(modal);
 
   return modal;
 }
