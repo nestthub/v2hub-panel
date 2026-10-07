@@ -21,7 +21,8 @@
  */
 
 import { $, createElement } from "./dom.js";
-import { clampDepth } from "./helpers.js";
+import { clampDepth, escapeHtml } from "./helpers.js";
+import { t, onLanguageChange } from "../i18n/index.js";
 
 const ROW_DEFAULTS = Object.freeze({
   data: "",
@@ -64,7 +65,7 @@ export function createSourceListEditor(containerId) {
     const input = createElement("input", {
       class: "input-field source-row-input",
       type: "text",
-      placeholder: "vless://... или https://.../sub/token",
+      placeholder: t("addSource.placeholder"),
       autocomplete: "off",
     });
     input.value = row.data;
@@ -88,8 +89,8 @@ export function createSourceListEditor(containerId) {
       class: "mini-btn eye-btn" + (row.is_hidden ? " is-hidden-on" : ""),
       type: "button",
       title: row.is_hidden
-        ? "Скрыт от пользователей — нажмите, чтобы показать"
-        : "Виден пользователям — нажмите, чтобы скрыть",
+        ? t("sources.hiddenTitle")
+        : t("sources.visibleTitle"),
     });
     eyeBtn.textContent = row.is_hidden ? "🙈" : "👁";
     eyeBtn.addEventListener("click", () => {
@@ -100,7 +101,7 @@ export function createSourceListEditor(containerId) {
     const removeBtn = createElement("button", {
       class: "mini-btn source-row-remove",
       type: "button",
-      title: "Удалить строку",
+      title: t("addSource.removeRow"),
     });
     removeBtn.textContent = "✕";
     removeBtn.disabled = rows.length <= 1;
@@ -118,7 +119,7 @@ export function createSourceListEditor(containerId) {
       class: "advanced-toggle source-row-advanced-toggle",
     });
     advToggle.innerHTML = `
-      <span>Расширенные настройки</span>
+      <span>${escapeHtml(t("advanced.title"))}</span>
       <span class="advanced-toggle-chevron">▾</span>
     `;
 
@@ -147,8 +148,8 @@ export function createSourceListEditor(containerId) {
     const depthRow = createElement("div", { class: "setting-row" });
     depthRow.innerHTML = `
       <div class="setting-row-text">
-        <div class="setting-row-title">Глубина вложенности</div>
-        <div class="setting-row-hint">Сколько уровней вложенных подписок разрешено (0–3)</div>
+        <div class="setting-row-title">${escapeHtml(t("sourceEdit.depth"))}</div>
+        <div class="setting-row-hint">${escapeHtml(t("sourceEdit.depthHint"))}</div>
       </div>
     `;
 
@@ -246,6 +247,9 @@ export function createSourceListEditor(containerId) {
   }
 
   reset();
+
+  // Re-render rows (placeholders, titles, labels) when the language changes.
+  onLanguageChange(() => render());
 
   return {
     addRow,

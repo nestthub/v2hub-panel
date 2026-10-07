@@ -178,3 +178,29 @@ def test_admin_image_upload_is_not_available(client):
         json={"filename": "background.png", "data": "data:image/png;base64,AAAA"},
     )
     assert res.status_code == 404
+
+
+def test_admin_update_default_language(client):
+    from v2hub_panel.utils.admin_auth import generate_admin_token
+
+    with patch("v2hub_panel.utils.admin_auth.settings.admin_panel_password", ADMIN_SECRET):
+        headers = {"Authorization": f"Bearer {generate_admin_token(ADMIN_SECRET)}"}
+
+        res = client.put(
+            "/api/admin/settings/default_language",
+            headers=headers,
+            json={"value": "zh-cn"},
+        )
+        assert res.status_code == 200
+        assert res.json()["value"] == "zh-CN"
+
+        cfg = client.get("/api/config").json()
+        assert cfg["settings"]["default_language"] == "zh-CN"
+        assert client.get("/api/settings/public").json()["default_language"] == "zh-CN"
+
+        bad = client.put(
+            "/api/admin/settings/default_language",
+            headers=headers,
+            json={"value": "xx"},
+        )
+        assert bad.status_code == 400

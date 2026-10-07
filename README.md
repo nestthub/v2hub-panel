@@ -702,6 +702,33 @@ uv run pytest
 
 ---
 
+## Localization (i18n)
+
+The Mini App UI is available in **English, Русский, فارسی (RTL), 简体中文**.
+
+Language resolution order (first match wins):
+
+1. the language the user picked in **Settings → Language** (stored in `localStorage`, `v2hub_language`);
+2. inside a Telegram Mini App: the `language_code` Telegram passes (`initDataUnsafe.user.language_code`); in a regular browser: `navigator.languages`;
+3. the panel-wide default set by the admin (`default_language` in the Admin Panel);
+4. English.
+
+Auto-detected languages are never persisted, only an explicit choice in Settings is.
+
+The Admin Panel (`/admin`) follows the same rules and has its own language picker in the header; the choice is shared with the main app.
+
+Adding a language:
+
+1. copy `frontend/scripts/i18n/locales/en.js` to e.g. `tr.js` and translate the values
+   (set `meta.dir` to `"rtl"` for right-to-left languages; missing keys fall back to English);
+2. register it in `frontend/scripts/i18n/locales/index.js`;
+3. add one `SettingOption` to `LANGUAGE_OPTIONS` in `src/v2hub_panel/services/settings_registry.py`
+   so it can be chosen as the admin default.
+
+`frontend/tests/i18n.test.js` checks that every locale has the same keys and placeholders as English.
+
+---
+
 ## Frontend tests
 
 Frontend uses Vitest.

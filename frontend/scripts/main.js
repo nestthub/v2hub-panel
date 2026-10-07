@@ -4,7 +4,8 @@
  * Boot sequence:
  * 1. Fetch server config
  * 2. Apply config to state
- * 3. Load saved theme
+ * 3. Resolve language (saved > Telegram/browser > admin default > en)
+ * 3b. Load saved theme
  * 4. Setup modal handlers
  * 5. Auto-fill token via Telegram Mini App initData, if applicable
  * 6. Auto connect if credentials exist
@@ -24,14 +25,48 @@ import * as State from "./state.js";
 import { fetchServerConfig, fetchTelegramAutoFill } from "./api.js";
 
 import {
+  initLanguage,
+  applyServerDefaultLanguage,
+  onLanguageChange,
+  applyTranslations,
+} from "./i18n/index.js";
+
+import {
   loadSavedTheme,
   openSettings,
   applyDefaultTheme,
   applyDefaultBackground,
 } from "./ui/settings.js";
 
+/**
+ * Re-render everything that was built from JS strings (the static HTML is
+ * handled by data-i18n attributes) so a language switch is instant and
+ * needs no page reload.
+ */
+function refreshDynamicUi() {
+  const connectBtn = document.querySelector(".icon-btn.primary");
+  Subscriptions.updateConnectionDisplay(
+    Boolean(connectBtn?.classList.contains("is-connected")),
+  );
+  Subscriptions.renderSubscriptionsList();
+
+  if ($("screen-editor")?.classList.contains("active")) {
+    Sources.renderSources();
+    Sources.renderPreview();
+  }
+  if ($("screen-providers")?.classList.contains("active")) {
+    Providers.renderProviders();
+  }
+}
+
 async function init() {
   try {
+    // Language: saved choice > Telegram/browser language (sync, before the
+    // first render). The admin default is applied once the config arrives.
+    initLanguage();
+    applyTranslations(document);
+    onLanguageChange(refreshDynamicUi);
+
     // Load theme before rendering UI
     loadSavedTheme();
 
@@ -63,6 +98,10 @@ async function init() {
     if (versionEl && State.serverConfig.app_version) {
       versionEl.textContent = `v${State.serverConfig.app_version}`;
     }
+
+    // Admin-configured default language: only used when the visitor has no
+    // saved choice and their browser/Telegram language is unsupported.
+    applyServerDefaultLanguage(State.serverConfig.settings?.default_language);
 
     const serverTheme =
       State.serverConfig.settings?.default_theme ||
@@ -177,7 +216,14 @@ function _positionAboutPopup() {
   const rect = btn.getBoundingClientRect();
   popup.style.position = "fixed";
   popup.style.top = `${rect.bottom + 10}px`;
-  popup.style.left = `${rect.left}px`;
+  if (document.documentElement.dir === "rtl") {
+    // Anchor to the button's right edge so the popup stays on screen.
+    popup.style.left = "auto";
+    popup.style.right = `${document.documentElement.clientWidth - rect.right}px`;
+  } else {
+    popup.style.right = "auto";
+    popup.style.left = `${rect.left}px`;
+  }
 }
 
 function _trackAboutPopup() {

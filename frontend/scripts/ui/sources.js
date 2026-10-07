@@ -25,6 +25,7 @@ import { createSourceListEditor } from "../utils/source-list-editor.js";
 import { showToast, showError } from "./toast.js";
 import { openModal, closeModal } from "./modals.js";
 import { showSaveBar, hideSaveBar } from "./subscriptions.js";
+import { t } from "../i18n/index.js";
 
 /**
  * Switch tab in editor
@@ -90,8 +91,8 @@ export function renderSources() {
     list.innerHTML = `
       <div class="empty">
         <div class="empty-icon">🧩</div>
-        <div class="empty-title">Источников пока нет</div>
-        <div class="empty-sub">Добавьте конфиг, ссылку на подписку или внутренний token</div>
+        <div class="empty-title">${escapeHtml(t("sources.emptyTitle"))}</div>
+        <div class="empty-sub">${escapeHtml(t("sources.emptySub"))}</div>
       </div>
     `;
     return;
@@ -123,7 +124,7 @@ function buildFullSourceItem(src, idx) {
 
   // FIX [High]: Весь innerHTML использует только escapeHtml — никаких onclick со значениями.
   item.innerHTML = `
-    <div class="drag-handle" title="Переместить">⠿</div>
+    <div class="drag-handle" title="${escapeHtml(t("sources.move"))}">⠿</div>
     <div class="source-status"></div>
     <div class="source-data" title="${escapeHtml(src.data)}">${escapeHtml(shortData)}</div>
     <span class="badge-type ${inferBadgeClass(src.source_type)}">
@@ -133,18 +134,18 @@ function buildFullSourceItem(src, idx) {
       <button
         class="mini-btn eye-btn${src.is_hidden ? " is-hidden-on" : ""}"
         type="button"
-        title="${src.is_hidden ? "Скрыт от пользователей — нажмите, чтобы показать" : "Виден пользователям — нажмите, чтобы скрыть"}"
+        title="${escapeHtml(src.is_hidden ? t("sources.hiddenTitle") : t("sources.visibleTitle"))}"
       >
         ${src.is_hidden ? "🙈" : "👁"}
       </button>
       ${
         src.source_type !== "config"
           ? `
-        <button class="mini-btn refresh-btn" type="button" title="Обновить">↻</button>
+        <button class="mini-btn refresh-btn" type="button" title="${escapeHtml(t("common.refresh"))}">↻</button>
       `
           : ""
       }
-      <button class="mini-btn ctx-btn" type="button" title="Меню">⋯</button>
+      <button class="mini-btn ctx-btn" type="button" title="${escapeHtml(t("common.menu"))}">⋯</button>
     </div>
   `;
 
@@ -192,7 +193,7 @@ function buildReadOnlySourceItem(src, idx) {
       ${escapeHtml(formatBadgeLabel(src))}
     </span>
     <div class="source-actions">
-      <button class="mini-btn copy-btn-source" type="button" title="Копировать">⎘</button>
+      <button class="mini-btn copy-btn-source" type="button" title="${escapeHtml(t("common.copy"))}">⎘</button>
     </div>
   `;
 
@@ -201,11 +202,7 @@ function buildReadOnlySourceItem(src, idx) {
     copyBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
       const ok = await copyToClipboard(src.data);
-      showToast(
-        ok
-          ? "Источник скопирован"
-          : "Не удалось скопировать — выделите вручную",
-      );
+      showToast(ok ? t("toast.sourceCopied") : t("toast.copyFailed"));
     });
   }
 
@@ -314,7 +311,7 @@ const addSourceEditor = createSourceListEditor("add-source-rows");
  */
 export function openAddSourceModal() {
   if (!State.getCurrentCapabilities().addSource) {
-    showToast("Нельзя добавлять источники в подписку провайдера");
+    showToast(t("toast.providerNoAddSource"));
     return;
   }
   document.querySelectorAll(".source-type-item").forEach((el) => {
@@ -348,13 +345,13 @@ export function addSourceRow() {
  */
 export function addSource() {
   if (!State.getCurrentCapabilities().addSource) {
-    showToast("Нельзя добавлять источники в подписку провайдера");
+    showToast(t("toast.providerNoAddSource"));
     return;
   }
 
   const payloadSources = addSourceEditor.toPayloadSources();
   if (!payloadSources.length) {
-    showToast("Введите данные хотя бы одного источника");
+    showToast(t("toast.enterSource"));
     return;
   }
 
@@ -391,8 +388,8 @@ export function addSource() {
   if (rejected.length) {
     showToast(
       rejected.length === 1
-        ? `Не удалось распознать источник: "${rejected[0].slice(0, 40)}"`
-        : `Не удалось распознать ${rejected.length} источник(ов) — проверьте формат`,
+        ? t("toast.sourceRejectedOne", { source: rejected[0].slice(0, 40) })
+        : t("toast.sourceRejectedMany", { count: rejected.length }),
     );
   }
 
@@ -407,8 +404,8 @@ export function addSource() {
 
   showToast(
     newEntries.length > 1
-      ? `Добавлено ${newEntries.length} источника — не забудьте сохранить`
-      : "Источник добавлен — не забудьте сохранить",
+      ? t("toast.sourcesAdded", { count: newEntries.length })
+      : t("toast.sourceAdded"),
   );
 }
 
@@ -430,9 +427,7 @@ export function toggleSourceHidden(e, srcId) {
   showSaveBar();
   renderSources();
   showToast(
-    arr[idx].is_hidden
-      ? "Источник скрыт от пользователей — не забудьте сохранить"
-      : "Источник снова виден — не забудьте сохранить",
+    arr[idx].is_hidden ? t("toast.sourceHidden") : t("toast.sourceShown"),
   );
 }
 
@@ -490,9 +485,7 @@ export function openCtxMenu(e, srcId) {
 
   editItem.style.display = "";
   editLabel.textContent =
-    source.source_type === "config"
-      ? "Редактировать конфиг"
-      : "Редактировать подписку";
+    source.source_type === "config" ? t("sourceEdit.title") : t("edit.title");
 
   _ctxAnchorEl = e.currentTarget;
   _positionCtxMenu();
@@ -531,7 +524,7 @@ export function deleteSourceFromCtx() {
     State.updateDraftSources(arr);
     showSaveBar();
     renderSources();
-    showToast("Источник удалён");
+    showToast(t("toast.sourceDeleted"));
   }
 }
 
@@ -545,7 +538,7 @@ export function refreshSource(e, btn) {
   btn.innerHTML = '<span class="spinner"></span>';
   setTimeout(() => {
     btn.innerHTML = "↻";
-    showToast("Источник обновлён");
+    showToast(t("toast.sourceRefreshed"));
   }, 900);
 }
 
@@ -568,15 +561,15 @@ export function renderPreview() {
     statsGrid.innerHTML = `
       <div class="preview-card">
         <div class="preview-value">${totalConfigs}</div>
-        <div class="preview-label">Всего конфигов</div>
+        <div class="preview-label">${escapeHtml(t("preview.totalConfigs"))}</div>
       </div>
       <div class="preview-card">
         <div class="preview-value">${sourceCount}</div>
-        <div class="preview-label">Источников</div>
+        <div class="preview-label">${escapeHtml(t("preview.sources"))}</div>
       </div>
       <div class="preview-card">
         <div class="preview-value">${typeSet.size}</div>
-        <div class="preview-label">Типов</div>
+        <div class="preview-label">${escapeHtml(t("preview.types"))}</div>
       </div>
     `;
   }
@@ -585,7 +578,7 @@ export function renderPreview() {
   const previewBox = $("preview-box");
   if (previewBox) {
     previewBox.innerHTML = (
-      previewItems.length ? previewItems : ["Нет источников"]
+      previewItems.length ? previewItems : [t("preview.none")]
     )
       .map(
         (c, i) => `
@@ -601,8 +594,8 @@ export function renderPreview() {
   const previewFooter = $("preview-footer");
   if (previewFooter) {
     previewFooter.innerHTML = `
-      <span>Показано ${Math.min(previewItems.length, totalConfigs || previewItems.length)} из ${totalConfigs}</span>
-      <span>Прокрутите для просмотра всех</span>
+      <span>${escapeHtml(t("preview.shown", { shown: Math.min(previewItems.length, totalConfigs || previewItems.length), total: totalConfigs }))}</span>
+      <span>${escapeHtml(t("preview.scroll"))}</span>
     `;
   }
 }
@@ -664,9 +657,7 @@ export async function copyExportUrl() {
   const val = (el?.dataset?.full || el?.textContent || "").trim();
   if (!val || val === "—") return;
   const ok = await copyToClipboard(val);
-  showToast(
-    ok ? "Ссылка скопирована" : "Не удалось скопировать — выделите вручную",
-  );
+  showToast(ok ? t("toast.linkCopied") : t("toast.copyFailed"));
 }
 
 export async function copyB64() {
@@ -674,9 +665,7 @@ export async function copyB64() {
   const val = (el?.dataset?.full || el?.textContent || "").trim();
   if (!val || val === "—") return;
   const ok = await copyToClipboard(val);
-  showToast(
-    ok ? "Base64 скопирован" : "Не удалось скопировать — выделите вручную",
-  );
+  showToast(ok ? t("toast.b64Copied") : t("toast.copyFailed"));
 }
 
 export async function copySourceFromCtx() {
@@ -685,9 +674,7 @@ export async function copySourceFromCtx() {
   const source = arr.find((s) => s.id === State.state.ctxSourceId);
   if (!source?.data) return;
   const ok = await copyToClipboard(source.data);
-  showToast(
-    ok ? "Источник скопирован" : "Не удалось скопировать — выделите вручную",
-  );
+  showToast(ok ? t("toast.sourceCopied") : t("toast.copyFailed"));
 }
 
 export function downloadBundle() {
@@ -696,7 +683,7 @@ export function downloadBundle() {
   const el = $("export-b64");
   const text = el?.dataset?.full || el?.textContent || "";
   if (!text || text === "—") {
-    showToast("Нет данных для скачивания");
+    showToast(t("toast.nothingToDownload"));
     return;
   }
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
@@ -707,7 +694,7 @@ export function downloadBundle() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
-  showToast("Файл скачан");
+  showToast(t("toast.fileDownloaded"));
 }
 
 export function openQrModal() {
@@ -822,9 +809,7 @@ export function editSourceCommentFromCtx() {
 
     const titleEl = $("source-settings-title");
     if (titleEl) {
-      titleEl.textContent = isConfig
-        ? "Редактировать конфиг"
-        : "Редактировать подписку";
+      titleEl.textContent = isConfig ? t("sourceEdit.title") : t("edit.title");
     }
 
     const commentGroup = $("source-comment-group");
@@ -930,6 +915,6 @@ export function saveSourceComment() {
     renderSources();
     closeModal("modal-edit-source-comment");
     State.state.ctxSourceId = null;
-    showToast("Настройки источника обновлены — не забудьте сохранить");
+    showToast(t("toast.sourceSettingsUpdated"));
   }
 }

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>v2hub Admin — Settings</title>
+    <title data-i18n="admin.docTitle">v2hub Admin — Settings</title>
 
     <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
     <link rel="stylesheet" href="/static/styles/variables.css" />
@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/static/styles/components.css" />
     <link rel="stylesheet" href="/static/styles/components-advanced.css" />
     <link rel="stylesheet" href="/static/styles/modals.css" />
+    <link rel="stylesheet" href="/static/styles/rtl.css" />
 
     <style>
       .admin-container {
@@ -73,9 +74,13 @@
       }
       .theme-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px;
         margin: 18px 0;
+      }
+      /* 9+ options: three per row */
+      .theme-grid.cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .theme-option-card {
         border: 2px solid var(--line);
@@ -206,22 +211,57 @@
       .hidden {
         display: none !important;
       }
+      .admin-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .admin-language-select {
+        width: auto;
+        padding: 8px 12px;
+      }
     </style>
   </head>
   <body class="dark-theme">
+    <script>
+      // Apply the saved language direction before first paint (no RTL flash).
+      (function () {
+        try {
+          var lang = localStorage.getItem("v2hub_language");
+          if (lang) {
+            document.documentElement.setAttribute("lang", lang);
+            if (/^(fa|ar|he|ur)(-|$)/i.test(lang)) {
+              document.documentElement.setAttribute("dir", "rtl");
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
     <div class="admin-container">
       <div class="admin-header">
         <div class="admin-brand">
-          <img src="/assets/logo.svg" alt="v2hub logo" />
+          <img
+            src="/assets/logo.svg"
+            data-i18n-alt="admin.logoAlt"
+            alt="v2hub logo"
+          />
           <span>v2hub</span>
-          <span class="admin-badge">Admin</span>
+          <span class="admin-badge" data-i18n="admin.badge">Admin</span>
         </div>
-        <div>
-          <a href="/" class="btn-secondary">← Back to Panel</a>
+        <div class="admin-actions">
+          <select
+            id="admin-language-select"
+            class="form-control admin-language-select"
+            data-i18n-aria-label="admin.language"
+            aria-label="Language"
+          ></select>
+          <a href="/" class="btn-secondary" data-i18n="admin.back"
+            >← Back to Panel</a
+          >
           <button
             id="btn-logout"
             class="btn-secondary hidden"
-            style="margin-left: 8px"
+            data-i18n="admin.logout"
           >
             Logout
           </button>
@@ -230,8 +270,10 @@
 
       <!-- Login View -->
       <div id="section-login" class="admin-card auth-box">
-        <div class="admin-card-title">🔐 Admin Authentication</div>
-        <div class="admin-card-desc">
+        <div class="admin-card-title" data-i18n="admin.auth.title">
+          🔐 Admin Authentication
+        </div>
+        <div class="admin-card-desc" data-i18n="admin.auth.desc">
           Enter your server's admin panel password to access settings
           management.
         </div>
@@ -240,7 +282,9 @@
 
         <form id="form-login">
           <div class="form-group">
-            <label for="admin-secret-input">Admin Panel Password</label>
+            <label for="admin-secret-input" data-i18n="admin.auth.passwordLabel"
+              >Admin Panel Password</label
+            >
             <input
               id="admin-secret-input"
               type="password"
@@ -255,6 +299,7 @@
             type="submit"
             class="btn-primary"
             style="width: 100%"
+            data-i18n="admin.auth.submit"
           >
             Sign In
           </button>

@@ -80,7 +80,7 @@
 
 .modal-close {
   position: absolute;
-  right: 16px;
+  inset-inline-end: 16px;
   top: 16px;
   width: 36px;
   height: 36px;

@@ -291,7 +291,7 @@ body.light-theme .badge-token {
   border-radius: 6px;
   padding: 2px 6px;
   vertical-align: middle;
-  margin-left: 6px;
+  margin-inline-start: 6px;
 }
 .fixed-badge::before {
   content: "🔒";

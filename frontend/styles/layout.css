@@ -341,7 +341,7 @@
     grid-area: actions;
     justify-content: flex-end;
     margin-top: 4px;
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

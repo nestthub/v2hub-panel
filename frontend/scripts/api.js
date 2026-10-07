@@ -4,6 +4,7 @@
  */
 
 import { loadConnectionLocal, getEffectiveBaseUrl } from "./state.js";
+import { t } from "./i18n/index.js";
 
 // ---------------------------------------------------------------------------
 // Credentials
@@ -14,11 +15,11 @@ function getCreds() {
   const api_token = loadConnectionLocal().api_token;
 
   if (!base_url) {
-    throw new Error("Укажите API URL для работы с подписками.");
+    throw new Error(t("err.apiUrlRequired"));
   }
 
   if (!api_token) {
-    throw new Error("Введите API-токен, чтобы продолжить.");
+    throw new Error(t("err.tokenRequired"));
   }
 
   return { base_url, api_token };
@@ -57,7 +58,9 @@ async function request(path, { method = "GET", headers = {}, body } = {}) {
       body,
     });
   } catch (err) {
-    throw new Error(`Ошибка сети: ${err.message}`);
+    const networkError = new Error(t("err.network", { message: err.message }));
+    networkError.isNetworkError = true;
+    throw networkError;
   }
 
   const text = await response.text();
